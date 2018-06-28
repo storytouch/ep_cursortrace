@@ -12,6 +12,7 @@
       },
       "hooks": {
         "eejsBlock_styles": "ep_cursortrace/css",
+        "clientVars" : "ep_cursortrace/settings",
         "handleMessage": "ep_cursortrace/handleMessage"
       }
     }

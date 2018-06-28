@@ -78,7 +78,6 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb){
   if (!initiated) return;
 
   // A huge problem with this is that it runs BEFORE the dom has been updated so edit events are always late..
-
   var action = context.payload.action;
   var padId = context.payload.padId;
   var authorId = context.payload.authorId;
@@ -89,28 +88,17 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb){
     var x = context.payload.locationX;
     var position = caretPosition.getCaretPosition(y, x);
 
-    // Author color
     var users = pad.collabClient.getConnectedUsers();
     $.each(users, function(user, value){
       if(value.userId == authorId){
-        var authorClass = exports.getAuthorClassName(authorId);
-        var colors = pad.getColorPalette(); // support non set colors
-        var color = colors[value.colorId] || value.colorId; // Test for XSS
-        var $outBody = $('iframe[name="ace_outer"]').contents().find("#outerdocbody");
-
-        // Remove all divs that already exist for this author
-        $outBody.find(".caret-"+authorClass).remove();
+        var color = getAuthorColor(value);
+        var authorName = getAuthorName(context.payload);
 
         // Location of stick direction IE up or down
         var location = position.top >= INDICATOR_HEIGHT ? 'stickUp' : 'stickDown';
 
-        var authorName = decodeURI(escape(context.payload.authorName));
-        if(authorName == "null"){
-          var authorName = SMILEY; // If the users username isn't set then display a smiley face
-        }
-
         // Create a new Div for this author
-        var classes = "class='caretindicator " + location + " caret-" + authorClass + "'";
+        var classes = "class='caretindicator " + location + "'";
         var $indicator = $("<div " + classes + " title="+authorName+"><p>"+authorName+"</p></div>");
         $indicator.css({
           height:  INDICATOR_HEIGHT + "px",
@@ -118,7 +106,8 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb){
           top: position.top + "px",
           "background-color": color,
         });
-        $outBody.append($indicator);
+
+        showIndicator($indicator, authorId);
 
         // Are we following this author?
         if(follow_user.isFollowingUser(value.userId)) {
@@ -127,24 +116,60 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb){
           scrollTo(position.top);
         }
 
-        // After a while, fade it out :)
-        setTimeout(function(){
-          $indicator.fadeOut(500, function(){
-            $indicator.remove();
-          });
-        }, 2000);
+        if (clientVars.ep_cursortrace.fade_out_timeout) {
+          // After a while, fade it out :)
+          setTimeout(function(){
+            $indicator.fadeOut(500, function(){
+              $indicator.remove();
+            });
+          }, clientVars.ep_cursortrace.fade_out_timeout);
+        }
       }
     });
   }
 }
 
+var getAuthorColor = function(author) {
+  var colors = pad.getColorPalette(); // support non set colors
+  var color = colors[author.colorId] || author.colorId; // Test for XSS
+  return color;
+}
+
+var getAuthorName = function(payload) {
+  var authorName = decodeURI(escape(payload.authorName));
+  if (authorName == "null") {
+    authorName = SMILEY; // If the users username isn't set then display a smiley face
+  }
+  return authorName;
+}
+
+var showIndicator = function($indicator, authorId) {
+  var $outerdoc = getOuterDoc();
+
+  var authorClass = exports.getAuthorClassName(authorId);
+  var authorClassName = "caret-" + authorClass;
+
+  // Remove all divs that already exist for this author
+  $outerdoc.find("." + authorClassName).remove();
+
+  $indicator.addClass(authorClassName);
+  $outerdoc.append($indicator);
+}
+
 var scrollTo = function(top) {
   var newY = top + "px";
-  var $outerdoc = $('iframe[name="ace_outer"]').contents().find("#outerdocbody");
+  var $outerdoc = getOuterDoc();
   var $outerdocHTML = $outerdoc.parent();
 
   // works on earlier versions of Chrome (< 61)
   $outerdoc.animate({scrollTop: newY});
   // works on Firefox & later versions of Chrome (>= 61)
   $outerdocHTML.animate({scrollTop: newY});
+}
+
+// Easier access to outer doc body
+var $outerDocBody;
+var getOuterDoc = function() {
+  $outerDocBody = $outerDocBody || $('iframe[name="ace_outer"]').contents().find("#outerdocbody");
+  return $outerDocBody;
 }
