@@ -20,22 +20,13 @@ exports.getCaretPosition = function(caretLine, caretColumn) {
   var $clonedLine     = cloneLineWithStyle(caretLine);
   var nodeInfo        = getNodeInfoWhereCaretIs(caretColumn, $clonedLine);
   var counter         = nodeInfo.counter;
-  var $cloneChildNode = nodeInfo.node;
-
-  var texts = getTextsBeforeAndAfterCaret($cloneChildNode, counter, caretColumn);
-  var textBeforeCaret = texts.textBeforeCaret;
-  var textAfterCaret = texts.textAfterCaret;
+  var cloneTextNode   = nodeInfo.node;
+  var cloneParentNode = cloneTextNode.parentNode;
 
   // Step 2:
+  var secondHalfOfTextNode = splitNodeOnCaretPosition(cloneTextNode, counter, caretColumn);
   var span = createHelperSpan();
-
-  // Remove the existing text
-  $cloneChildNode.text('');
-
-  // Reinsert the text, but with the additional node at caret position
-  $cloneChildNode[0].appendChild(document.createTextNode(textBeforeCaret)); // Insert text before caret
-  $cloneChildNode[0].appendChild(span); // Insert element at caret position
-  $cloneChildNode[0].appendChild(document.createTextNode(textAfterCaret)); // Insert text after caret
+  cloneParentNode.insertBefore(span, secondHalfOfTextNode); // Insert element at caret position
 
   // Step 3:
   // In order to see where the node we added is, we need to insert it into the document
@@ -60,51 +51,46 @@ exports.getCaretPosition = function(caretLine, caretColumn) {
 var getNodeInfoWhereCaretIs = function(caretColumn, $caretDiv) {
   // $textNodes holds all text nodes that are found inside the div
   var $textNodes = $caretDiv.find('*').contents().filter(function() {
-    return this.nodeType === 3;
+    return this.nodeType === Node.TEXT_NODE;
   });
 
   // Now we want to find the text node the caret is in
   var counter = 0; // Holds the added length of text of all text nodes parsed so far
-  var $childNode = null; // The node caret is in
+  var childNode = null; // The node caret is in
 
-  $textNodes.each(function(index,element) {
-    counter = counter + element.wholeText.length; //add up to the length of text nodes parsed
-    $childNode = $(element.parentNode);
+  $textNodes.each(function(index, element) {
+    counter = counter + element.nodeValue.length; // Add up to the length of text nodes parsed
+    childNode = element;
 
     // Found node where caret is
     if(counter >= caretColumn) {
-      return false; //stop .each by returning false
+      return false; // Stop .each by returning false
     }
   });
 
-  if ($childNode === null) {
+  if (childNode === null) {
     // There was no text node inside $caretDiv, so caret is on an empty line.
     // Empty lines on Etherpad always have a <br>, so we get its parent.
     // We cannot use br itself because if we insert a span inside the br we
     // get weird positions on screen
-    $childNode = $caretDiv.find('br').parent();
+    childNode = $caretDiv.find('br').get(0);
   }
 
   return {
-    node: $childNode,
+    node: childNode,
     counter: counter,
   };
 }
 
-var getTextsBeforeAndAfterCaret = function($cloneChildNode, counter, caretColumn) {
-  var targetNode = $cloneChildNode[0].childNodes[0]; // The subnode our caret is in
-  var targetNodeText = targetNode.wholeText || ''; // Text of the subnode our caret is in
+var splitNodeOnCaretPosition = function(cloneTextNode, counter, caretColumn) {
+  // cloneTextNode is an empty line (the <br> inside the <div>), so we don't need to split anything
+  if (cloneTextNode.nodeType !== Node.TEXT_NODE) return cloneTextNode;
 
+  var targetNodeText = cloneTextNode.nodeValue || ''; // Text of the subnode our caret is in
   // How many characters are between the start of the element and the caret?
   var leftoverString = targetNodeText.length - (counter - caretColumn);
-
-  var textBeforeCaret = targetNodeText.substr(0, leftoverString);
-  var textAfterCaret = targetNodeText.substr(leftoverString);
-
-  return {
-    textBeforeCaret: textBeforeCaret,
-    textAfterCaret: textAfterCaret,
-  };
+  var secondHalf = cloneTextNode.splitText(leftoverString);
+  return secondHalf;
 }
 
 // Clone line with caret and copy its style
