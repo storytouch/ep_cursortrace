@@ -5,10 +5,15 @@ var caretPosition = require('./caret_position');
 var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 var initiated = false;
+var otherCaretLocations = {};
 var last = undefined;
 
 exports.postAceInit = function(hook_name, args, cb) {
   initiated = true;
+
+  // show carets of other authors that had already sent their positions
+  var caretLocations = Object.values(otherCaretLocations);
+  buildAndShowIndicatorFor(caretLocations);
 };
 
 exports.getAuthorClassName = function(author)
@@ -42,90 +47,116 @@ exports.className2Author = function(className)
 }
 
 exports.aceEditEvent = function(hook_name, args, cb) {
-  var callstack = args.callstack;
-  var rep = args.rep;
+  if (!initiated) return;
 
   // Note: last is a tri-state: undefined (when the pad is first loaded), null (no last cursor) and [line, col]
-  // The AceEditEvent because it usually applies to selected items and isn't really so mucha bout current position.
-  var caretMoving = ((callstack.editEvent.eventType == "handleClick") || (callstack.type === "handleKeyEvent") || (callstack.type === "idleWorkTimer") );
-  if (caretMoving && initiated){ // Note that we have to use idle timer to get the mouse position
-    var Y = rep.selStart[0];
-    // Y might be a line with line attributes, so we need to ignore the '*' on the text
-    var X = rep.selStart[1] - rep.lines.atIndex(Y).lineMarker;
-    if (!last || Y != last[0] || X != last[1]) { // If the position has changed
-      var myAuthorId = pad.getUserId();
-      var padId = pad.getPadId();
-      // Create a cursor position message to send to the server
-      var message = {
-        type : 'cursor',
-        action : 'cursorPosition',
-        locationY: Y,
-        locationX: X,
-        padId : padId,
-        myAuthorId : myAuthorId
-      }
-      last = [];
-      last[0] = Y;
-      last[1] = X;
+  // The AceEditEvent because it usually applies to selected items and isn't really so much about current position.
 
-      // console.log("Sent message", message);
-      pad.collabClient.sendMessage(message);  // Send the cursor position message to the server
+  if (isCaretMoving(args)) {
+    var rep = args.rep;
+    var line = rep.selStart[0];
+    // line might be a line with line attributes, so we need to ignore the '*' on the text
+    var column = rep.selStart[1] - rep.lines.atIndex(line).lineMarker;
+    if (positionChanged(line, column)) {
+      sendMessageWithCaretPosition(line, column);
+      last = [line, column];
     }
   }
 }
 
-exports.handleClientMessage_CUSTOM = function(hook, context, cb){
-  if (!initiated) return;
+// Note that we have to use idle timer to get the mouse position
+var isCaretMoving = function(args) {
+  var callstack = args.callstack;
+  return (callstack.editEvent.eventType == "handleClick") ||
+         (callstack.type === "handleKeyEvent") ||
+         (callstack.type === "idleWorkTimer");
+}
 
-  // A huge problem with this is that it runs BEFORE the dom has been updated so edit events are always late..
-  var action = context.payload.action;
-  var padId = context.payload.padId;
+var positionChanged = function(line, column) {
+  return !last || line !== last[0] || column !== last[1];
+}
+
+var sendMessageWithCaretPosition = function(line, column) {
+  var myAuthorId = pad.getUserId();
+  var padId = pad.getPadId();
+  // Create a cursor position message to send to the server
+  var message = {
+    type : 'cursor',
+    action : 'cursorPosition',
+    locationY: line,
+    locationX: column,
+    padId : padId,
+    myAuthorId : myAuthorId
+  }
+
+  // console.log("Sent message", message);
+  // Send the cursor position message to the server
+  pad.collabClient.sendMessage(message);
+}
+
+exports.handleClientMessage_USER_NEWINFO = function(hook, context, cb) {
+  if (last) {
+    // we need to send our position to user who joined the pad, so our caret indicator is created there
+    sendMessageWithCaretPosition(last[0], last[1]);
+  }
+}
+
+exports.handleClientMessage_USER_LEAVE = function(hook, context, cb) {
+  // remove caret indicator for author
+  var userId = context.payload.userId;
+  var authorClass = exports.getAuthorClassName(userId);
+  var authorClassName = "caret-" + authorClass;
+  getOuterDoc().find("." + authorClassName).remove();
+}
+
+// A huge problem with this is that it runs BEFORE the dom has been updated so edit events are always late..
+exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
+  if (context.payload.action !== 'cursorPosition') return false;
+
+  // an author has sent this client a cursor position, we need to show it in the dom
+
   var authorId = context.payload.authorId;
-  if(pad.getUserId() === authorId) return false; // Dont process our own caret position (yes we do get it..) -- This is not a bug
+  var authorName = context.payload.authorName;
+  var line = context.payload.locationY + 1; // +1 as Etherpad line numbers start at 1
+  var column = context.payload.locationX;
 
-  if(action === 'cursorPosition'){ // an author has sent this client a cursor position, we need to show it in the dom
-    var y = context.payload.locationY + 1; // +1 as Etherpad line numbers start at 1
-    var x = context.payload.locationX;
-    var position = caretPosition.getCaretPosition(y, x);
+  var caretLocationData = {
+    authorId: authorId,
+    line: line,
+    column: column,
+  };
 
-    var users = pad.collabClient.getConnectedUsers();
-    $.each(users, function(user, value){
-      if(value.userId == authorId){
-        var color = getAuthorColor(value);
-        var authorName = getAuthorName(context.payload);
+  if (pad.getUserId() === authorId) {
+    // Dont process our own caret position (yes we do get it..) -- This is not a bug
+    return false;
+  } else if (!initiated) {
+    // we are not ready yet to show caret indicator, so store it for when we are
+    otherCaretLocations[authorId] = caretLocationData;
+  } else {
+    buildAndShowIndicatorFor([caretLocationData]);
+  }
+}
 
-        // Location of stick direction IE up or down
-        var location = position.top >= INDICATOR_HEIGHT ? 'stickUp' : 'stickDown';
+var buildAndShowIndicatorFor = function(caretLocations) {
+  var users = pad.collabClient.getConnectedUsers();
 
-        // Create a new Div for this author
-        var classes = "class='caretindicator " + location + "'";
-        var $indicator = $("<div " + classes + " title="+authorName+"><p>"+authorName+"</p></div>");
-        $indicator.css({
-          height:  INDICATOR_HEIGHT + "px",
-          left: position.left + "px",
-          top: position.top + "px",
-          "background-color": color,
-        });
+  for (var i = 0; i < caretLocations.length; i++) {
+    var caretLocation = caretLocations[i];
+    var authorId = caretLocation.authorId;
+    var line = caretLocation.line;
+    var column = caretLocation.column;
+    var position = caretPosition.getCaretPosition(line, column);
 
-        showIndicator($indicator, authorId);
-
-        // Are we following this author?
-        if(follow_user.isFollowingUser(value.userId)) {
-          if(position.top < 30) position.top = 0; // position.top line needs to be left visible
-          // scroll to the authors location
-          scrollTo(position.top);
+    if (position) {
+      $.each(users, function(index, user) {
+        if (user.userId === authorId) {
+          var $indicator = buildIndicator(user, position);
+          showIndicator($indicator, authorId);
+          scrollEditor(position, authorId);
+          fadeOutCaretIndicator($indicator);
         }
-
-        if (clientVars.ep_cursortrace.fade_out_timeout) {
-          // After a while, fade it out :)
-          setTimeout(function(){
-            $indicator.fadeOut(500, function(){
-              $indicator.remove();
-            });
-          }, clientVars.ep_cursortrace.fade_out_timeout);
-        }
-      }
-    });
+      });
+    }
   }
 }
 
@@ -135,12 +166,28 @@ var getAuthorColor = function(author) {
   return color;
 }
 
-var getAuthorName = function(payload) {
-  var authorName = decodeURI(escape(payload.authorName));
-  if (authorName == "null") {
-    authorName = SMILEY; // If the users username isn't set then display a smiley face
-  }
-  return authorName;
+// If the name isn't set then display a smiley face
+var getAuthorName = function(user) {
+  return user.name ? decodeURI(escape(user.name)) : SMILEY;
+}
+
+var buildIndicator = function(user, position) {
+  // Location of stick direction IE up or down
+  var location = position.top >= INDICATOR_HEIGHT ? 'stickUp' : 'stickDown';
+  var color = getAuthorColor(user);
+  var authorName = getAuthorName(user);
+  var classes = "class='caretindicator " + location + "'";
+
+  // Create a new Div for this author
+  var $indicator = $("<div " + classes + " title="+authorName+"><p>"+authorName+"</p></div>");
+  $indicator.css({
+    height:  INDICATOR_HEIGHT + "px",
+    left: position.left + "px",
+    top: position.top + "px",
+    "background-color": color,
+  });
+
+  return $indicator;
 }
 
 var showIndicator = function($indicator, authorId) {
@@ -156,6 +203,15 @@ var showIndicator = function($indicator, authorId) {
   $outerdoc.append($indicator);
 }
 
+var scrollEditor = function(position, authorId) {
+  // Are we following this author?
+  if(follow_user.isFollowingUser(authorId)) {
+    if(position.top < 30) position.top = 0; // position.top line needs to be left visible
+    // scroll to the authors location
+    scrollTo(position.top);
+  }
+}
+
 var scrollTo = function(top) {
   var newY = top + "px";
   var $outerdoc = getOuterDoc();
@@ -165,6 +221,17 @@ var scrollTo = function(top) {
   $outerdoc.animate({scrollTop: newY});
   // works on Firefox & later versions of Chrome (>= 61)
   $outerdocHTML.animate({scrollTop: newY});
+}
+
+var fadeOutCaretIndicator = function($indicator) {
+  if (clientVars.ep_cursortrace.fade_out_timeout) {
+    // After a while, fade it out :)
+    setTimeout(function(){
+      $indicator.fadeOut(500, function(){
+        $indicator.remove();
+      });
+    }, clientVars.ep_cursortrace.fade_out_timeout);
+  }
 }
 
 // Easier access to outer doc body

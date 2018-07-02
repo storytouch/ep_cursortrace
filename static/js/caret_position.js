@@ -16,8 +16,12 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
     5. Remove the clone, as it is not needed anymore.
 */
 exports.getCaretPosition = function(caretLine, caretColumn) {
+  // Are we ready to get caret position?
+  var $caretDiv = getPadInner().find('#innerdocbody > div:nth-child(' + caretLine + ')');
+  if ($caretDiv.length === 0) return;
+
   // Step 1:
-  var $clonedLine     = cloneLineWithStyle(caretLine);
+  var $clonedLine     = cloneLineWithStyle($caretDiv);
   var nodeInfo        = getNodeInfoWhereCaretIs(caretColumn, $clonedLine);
   var counter         = nodeInfo.counter;
   var cloneTextNode   = nodeInfo.node;
@@ -94,9 +98,7 @@ var splitNodeOnCaretPosition = function(cloneTextNode, counter, caretColumn) {
 }
 
 // Clone line with caret and copy its style
-var cloneLineWithStyle = function(caretLine) {
-  var $caretDiv = getPadInner().find('#innerdocbody > div:nth-child(' + caretLine + ')');
-
+var cloneLineWithStyle = function($caretDiv) {
   // Position of editor relative to client. Needed in final positioning
   var $padInnerFrame = getPadOuter().find('iframe[name="ace_inner"]');
   var innerEditorPosition = $padInnerFrame[0].getBoundingClientRect();

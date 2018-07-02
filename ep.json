@@ -8,6 +8,8 @@
         "postAceInit": "ep_cursortrace/static/js/main:postAceInit",
         "aceEditEvent": "ep_cursortrace/static/js/main:aceEditEvent",
         "handleClientMessage_CUSTOM": "ep_cursortrace/static/js/main",
+        "handleClientMessage_USER_NEWINFO": "ep_cursortrace/static/js/main",
+        "handleClientMessage_USER_LEAVE": "ep_cursortrace/static/js/main",
         "documentReady":"ep_cursortrace/static/js/follow_user"
       },
       "hooks": {
