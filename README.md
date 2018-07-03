@@ -7,6 +7,16 @@ Important: A caret is not a cursor, a cursor is what your mouse uses.. A caret i
 * Click on an authors colored icon block to follow that author as they move around a pad
 * I needed a third feature so let's go with free NFC Ring for anyone who spots this crazy "feature"
 
+## Customization
+
+By default, the caret indicator is rendered for 2 seconds, then it fades out. If you want to change this behavior, you can configure your `settings.json`:
+
+```
+  "ep_cursortrace":{
+    "fade_out_timeout": 2000 // in milliseconds. A 0 timeout means caret indicators are never hidden
+  }
+```
+
 ## TODO
 
 * Avoid race condition where the ACE object is sent and the cursor but the cursor arrives before the event
