@@ -1,0 +1,17 @@
+/* Adjust position for all elements (SEs and SMs) inside the cloned helper line.
+   We need this because our divs on pad_inner are not one next to the other -- there's
+   a margin-top of the inner element between them.
+   To compensate that, we need to cancel those margins on the cloned line, so we get the
+   correct position. */
+#tempPosId episode_name,
+#tempPosId act_name,
+#tempPosId sequence_name,
+#tempPosId scene_name,
+#tempPosId heading,
+#tempPosId action,
+#tempPosId character,
+#tempPosId transition,
+#tempPosId shot {
+  /* need !important here because the element margin is set on "style" attrib */
+  margin-top: 0px !important;
+}
