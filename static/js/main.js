@@ -1,5 +1,4 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
-var follow_user = require('./follow_user');
 var caretPosition = require('./caret_position');
 
 var SMILEY = "&#9785;"
@@ -152,7 +151,6 @@ var buildAndShowIndicatorFor = function(caretLocations) {
         if (user.userId === authorId) {
           var $indicator = buildIndicator(user, position);
           showIndicator($indicator, authorId);
-          scrollEditor(position, authorId);
           fadeOutCaretIndicator($indicator);
         }
       });
@@ -201,26 +199,6 @@ var showIndicator = function($indicator, authorId) {
 
   $indicator.addClass(authorClassName);
   $outerdoc.append($indicator);
-}
-
-var scrollEditor = function(position, authorId) {
-  // Are we following this author?
-  if(follow_user.isFollowingUser(authorId)) {
-    if(position.top < 30) position.top = 0; // position.top line needs to be left visible
-    // scroll to the authors location
-    scrollTo(position.top);
-  }
-}
-
-var scrollTo = function(top) {
-  var newY = top + "px";
-  var $outerdoc = getOuterDoc();
-  var $outerdocHTML = $outerdoc.parent();
-
-  // works on earlier versions of Chrome (< 61)
-  $outerdoc.animate({scrollTop: newY});
-  // works on Firefox & later versions of Chrome (>= 61)
-  $outerdocHTML.animate({scrollTop: newY});
 }
 
 var fadeOutCaretIndicator = function($indicator) {
