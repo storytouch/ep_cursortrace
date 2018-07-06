@@ -1,4 +1,5 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var utils = require('./utils');
 
 /*
   Get position where caret should be placed -- on **pad outer**.
@@ -17,7 +18,7 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 */
 exports.getCaretPosition = function(caretLine, caretColumn) {
   // Are we ready to get caret position?
-  var $caretDiv = getPadInner().find('#innerdocbody > div:nth-child(' + caretLine + ')');
+  var $caretDiv = utils.getPadInner().find('#innerdocbody > div:nth-child(' + caretLine + ')');
   if ($caretDiv.length === 0) return;
 
   // Step 1:
@@ -34,11 +35,11 @@ exports.getCaretPosition = function(caretLine, caretColumn) {
 
   // Step 3:
   // In order to see where the node we added is, we need to insert it into the document
-  $clonedLine.appendTo(getPadOuter().find('#outerdocbody'));
+  $clonedLine.appendTo(utils.getPadOuter().find('#outerdocbody'));
 
   // Step 4:
   var caretPosition = $(span).offset();
-  var scrollYPos = getPadOuter().scrollTop();
+  var scrollYPos = utils.getPadOuter().scrollTop();
 
   // Step 5:
   $clonedLine.remove(); // Clean up again
@@ -100,7 +101,7 @@ var splitNodeOnCaretPosition = function(cloneTextNode, counter, caretColumn) {
 // Clone line with caret and copy its style
 var cloneLineWithStyle = function($caretDiv) {
   // Position of editor relative to client. Needed in final positioning
-  var $padInnerFrame = getPadOuter().find('iframe[name="ace_inner"]');
+  var $padInnerFrame = utils.getPadOuter().find('iframe[name="ace_inner"]');
   var innerEditorPosition = $padInnerFrame[0].getBoundingClientRect();
 
   var childNodePosition = $caretDiv.position();
@@ -154,18 +155,4 @@ var createHelperSpan = function() {
   // (an empty span might be displayed above text on some scenarios)
   span.appendChild(document.createTextNode('\x0b'));
   return span;
-}
-
-// Easier access to outer pad
-var padOuter;
-var getPadOuter = function() {
-  padOuter = padOuter || $('iframe[name="ace_outer"]').contents();
-  return padOuter;
-}
-
-// Easier access to inner pad
-var padInner;
-var getPadInner = function() {
-  padInner = padInner || getPadOuter().find('iframe[name="ace_inner"]').contents();
-  return padInner;
 }

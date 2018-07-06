@@ -1,50 +1,44 @@
 describe('ep_cursortrace - Basic Tests', function () {
-  var multipleUsers, originalDistance, originalPosition;
+  var utils, multipleUsers;
+
+  var TARGET_LINE = 0;
+
+  var createScript = function(done) {
+    // add some content to the pad
+    var $firstLine = utils.getLine(TARGET_LINE);
+    $firstLine.sendkeys('first line '.repeat(20));
+    done();
+  }
 
   before(function(done) {
     multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
-    helper.newPad(function() {
-      // force setting to not hide caret indicators after some time, so tests
-      // can take a while and still be successful
-      makeSureCaretIndicatorWillBeAlwaysVisible();
-
-      // add some content to the pad
-      var $firstLine = helper.padInner$('div').first();
-      $firstLine.sendkeys('first line '.repeat(20));
-
-      multipleUsers.openSamePadOnWithAnotherUser(done);
-    });
-    this.timeout(60000);
+    utils = ep_cursortrace_test_helper.utils;
+    utils.openPadForMultipleUsers(this, createScript, done);
   });
 
   it('shows caret indicator when another user joins the same pad', function(done) {
-    helper.waitFor(function() {
-      return getCaretIndicator().is(':visible');
-    }, 1900).done(done);
+    utils.waitForCaretIndicatorToBeVisible(done);
   });
 
   it('shows caret indicator for the user that was already on the pad', function(done) {
     multipleUsers.performAsOtherUser(function(done) {
-      helper.waitFor(function() {
-        return getCaretIndicator().is(':visible');
-      }, 1900).done(done);
+      utils.waitForCaretIndicatorToBeVisible(done);
     }, done);
   });
 
   context('when other user moves the caret', function() {
-    before(function(done) {
-      originalPosition = getCaretIndicatorPosition();
+    var moveCaret = function(done) {
+      multipleUsers.startActingLikeOtherUser();
+      placeCaretAtEndOfLine(TARGET_LINE);
 
-      multipleUsers.performAsOtherUser(function(done) {
-        placeCaretAtEndOfLine();
-        done();
-      }, done);
-    });
+      multipleUsers.startActingLikeThisUser();
+      done();
+    }
 
     it('updates the caret indicator for this user', function(done) {
-      waitForCaretIndicatorToMove(function() {
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         // caret is at the end of the line; caret indicator should be there too
-        var distance = getDistanceBetweenCaretIndicatorAndEndOfLine();
+        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
@@ -53,16 +47,15 @@ describe('ep_cursortrace - Basic Tests', function () {
   });
 
   context('when this user edits the line where caret of other user is', function() {
-    before(function() {
-      originalPosition = getCaretIndicatorPosition();
-
-      var $firstLine = helper.padInner$('div').first();
+    var editLine = function(done) {
+      var $firstLine = utils.getLine(TARGET_LINE);
       $firstLine.sendkeys('{selectall}{leftarrow}').sendkeys('!');
-    });
+      done();
+    }
 
     it('updates the caret indicator of the other user', function(done) {
-      waitForCaretIndicatorToMove(function() {
-        var distance = getDistanceBetweenCaretIndicatorAndEndOfLine();
+      utils.executeAndWaitForCaretIndicatorToMove(editLine, function() {
+        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
@@ -71,22 +64,26 @@ describe('ep_cursortrace - Basic Tests', function () {
   });
 
   context('when other user formats part of the text', function() {
+    var originalPosition;
+
     before(function(done) {
       this.timeout(4000);
 
+      originalPosition = utils.getCaretIndicatorPosition();
+
       // [user 2] add bold to part of the middle of the line
       multipleUsers.startActingLikeOtherUser();
-      selectTextInTheMiddleOfTheLine();
+      selectTextInTheMiddleOfLine(TARGET_LINE);
       addBoldToSelectedText()
 
       // [user 1] caret indicator should move to the bold text
       multipleUsers.startActingLikeThisUser();
-      waitForCaretIndicatorToMove(function() {
-        originalPosition = getCaretIndicatorPosition();
+      utils.waitForCaretIndicatorToMove(originalPosition, function() {
+        originalPosition = utils.getCaretIndicatorPosition();
 
         // [user 2] go back to the end of line
         multipleUsers.startActingLikeOtherUser();
-        placeCaretAtEndOfLine();
+        placeCaretAtEndOfLine(TARGET_LINE);
 
         multipleUsers.startActingLikeThisUser();
         done();
@@ -94,8 +91,8 @@ describe('ep_cursortrace - Basic Tests', function () {
     });
 
     it('does not affect caret indicator for this user', function(done) {
-      waitForCaretIndicatorToMove(function() {
-        var distance = getDistanceBetweenCaretIndicatorAndEndOfLine();
+      utils.waitForCaretIndicatorToMove(originalPosition, function() {
+        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
@@ -115,24 +112,27 @@ describe('ep_cursortrace - Basic Tests', function () {
       helper.waitFor(function() {
         return helper.padInner$('div').length === originalNumberOfLines + 1;
       }).done(function() {
-        // [user 1] get baseline position
-        multipleUsers.startActingLikeThisUser();
-        originalPosition = getCaretIndicatorPosition();
-
-        // [user 2] place caret on empty line
-        multipleUsers.startActingLikeOtherUser();
-        var $lastLine = helper.padInner$('div').last();
-        $lastLine.sendkeys('{selectall}{leftarrow}');
-
         multipleUsers.startActingLikeThisUser();
         done();
       });
     });
 
+    var moveCaretToEmptyLine = function(done) {
+      // [user 2] place caret on empty line
+      multipleUsers.startActingLikeOtherUser();
+      var $lastLine = helper.padInner$('div').last();
+      $lastLine.sendkeys('{selectall}{leftarrow}');
+
+      multipleUsers.startActingLikeThisUser();
+      done();
+    }
+
     it('updates the caret indicator of the other user', function(done) {
-      waitForCaretIndicatorToMove(function() {
+      this.timeout(4000);
+
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEmptyLine, function() {
         var $emptyLine = helper.padInner$('div').last();
-        var distance = getDistanceBetweenCaretIndicatorAndTarget($emptyLine);
+        var distance = utils.getDistanceBetweenCaretIndicatorAndTarget($emptyLine);
 
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
@@ -148,64 +148,20 @@ describe('ep_cursortrace - Basic Tests', function () {
 
     it('removes the caret indicator', function(done) {
       helper.waitFor(function() {
-        return !getCaretIndicator().is(':visible');
+        return !utils.getCaretIndicator().is(':visible');
       }, 1900).done(done);
     });
   });
 
   /********************************** Helper Functions **********************************/
-  var makeSureCaretIndicatorWillBeAlwaysVisible = function() {
-    var pluginSettings = helper.padChrome$.window.clientVars.ep_cursortrace;
-    pluginSettings.fade_out_timeout = 0;
+  var placeCaretAtEndOfLine = function(lineNumber) {
+    var $line = utils.getLine(lineNumber);
+    $line.sendkeys('{selectall}{rightarrow}');
   }
 
-  var getCaretIndicator = function() {
-    return helper.padOuter$('.caretindicator');
-  }
-
-  var getDistanceBetweenCaretIndicatorAndTarget = function($target, useEndOfTargetAsOrigin) {
-    var caretPosition = getCaretIndicatorPosition();
-    // create a temp element to get its position, then remove it
-    var $helperMark = $('<span>x</span>');
-    if (useEndOfTargetAsOrigin) {
-      $target.append($helperMark);
-    } else {
-      $target.prepend($helperMark);
-    }
-    var helperMarkPosition = $helperMark.position();
-
-    var top  = caretPosition.top  - helperMarkPosition.top;
-    var left = caretPosition.left - helperMarkPosition.left;
-
-    $helperMark.remove();
-
-    return { top: top, left: left };
-  }
-
-  var getCaretIndicatorPosition = function() {
-    return getCaretIndicator().position();
-  }
-
-  var getDistanceBetweenCaretIndicatorAndEndOfLine = function() {
-    var $endOfFirstLine = helper.padInner$('div').first().find('span').last();
-    return getDistanceBetweenCaretIndicatorAndTarget($endOfFirstLine, true);
-  }
-
-  var waitForCaretIndicatorToMove = function(done) {
-    helper.waitFor(function() {
-      var position = getCaretIndicatorPosition();
-      return position.left !== originalPosition.left || position.top !== originalPosition.top;
-    }).done(done).fail(done);
-  }
-
-  var placeCaretAtEndOfLine = function() {
-    var $firstLine = helper.padInner$('div').first();
-    $firstLine.sendkeys('{selectall}{rightarrow}');
-  }
-
-  var selectTextInTheMiddleOfTheLine = function() {
-    var $firstLine = helper.padInner$('div').first();
-    helper.selectLines($firstLine, $firstLine, 50, 60);
+  var selectTextInTheMiddleOfLine = function(lineNumber) {
+    var $line = utils.getLine(lineNumber);
+    helper.selectLines($line, $line, 50, 60);
   }
 
   var addBoldToSelectedText = function() {
