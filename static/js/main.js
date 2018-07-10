@@ -1,19 +1,47 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var LINE_CHANGED_EVENT = require('ep_comments_page/static/js/utils').LINE_CHANGED_EVENT;
+var utils = require('./utils');
 var caretPosition = require('./caret_position');
 
 var SMILEY = "&#9785;"
+var TIME_TO_UPDATE_CARETS_POSITION = 500;
 var INDICATOR_HEIGHT = 16;
 var initiated = false;
-var otherCaretLocations = {};
-var last = undefined;
+var currentCaretLocations = {};
+var pendingCaretLocations = {};
 
 exports.postAceInit = function(hook_name, args, cb) {
   initiated = true;
 
-  // show carets of other authors that had already sent their positions
-  var caretLocations = Object.values(otherCaretLocations);
-  buildAndShowIndicatorFor(caretLocations);
+  pad.plugins = pad.plugins || {};
+  pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
+  pad.plugins.ep_cursortrace.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
+
+  showCaretOfAuthorsAlreadyOnPad();
+  updateCaretsWhenAnUpdateMightHadAffectedTheirPositions();
 };
+
+var showCaretOfAuthorsAlreadyOnPad = function() {
+  var caretLocations = Object.values(pendingCaretLocations);
+  buildAndShowIndicatorFor(caretLocations);
+}
+
+var updateCaretsWhenAnUpdateMightHadAffectedTheirPositions = function() {
+  utils.getPadInner().on(LINE_CHANGED_EVENT, function(e, data) {
+    var lineOfChange = data.lineNumber;
+    setTimeout(function() {
+      buildAndShowIndicatorsAfterLine(lineOfChange);
+    }, pad.plugins.ep_cursortrace.timeToUpdateCaretPosition);
+  });
+}
+
+var buildAndShowIndicatorsAfterLine = function(lineNumber) {
+  var allCaretLocations = Object.values(currentCaretLocations);
+  var caretLocationsAfterTargetLine = allCaretLocations.filter(function(caretLocation) {
+    return caretLocation.line >= lineNumber;
+  });
+  buildAndShowIndicatorFor(caretLocationsAfterTargetLine);
+}
 
 exports.getAuthorClassName = function(author)
 {
@@ -48,9 +76,6 @@ exports.className2Author = function(className)
 exports.aceEditEvent = function(hook_name, args, cb) {
   if (!initiated) return;
 
-  // Note: last is a tri-state: undefined (when the pad is first loaded), null (no last cursor) and [line, col]
-  // The AceEditEvent because it usually applies to selected items and isn't really so much about current position.
-
   if (isCaretMoving(args)) {
     var rep = args.rep;
     var line = rep.selStart[0];
@@ -58,7 +83,6 @@ exports.aceEditEvent = function(hook_name, args, cb) {
     var column = rep.selStart[1] - rep.lines.atIndex(line).lineMarker;
     if (positionChanged(line, column)) {
       sendMessageWithCaretPosition(line, column);
-      last = [line, column];
     }
   }
 }
@@ -72,7 +96,9 @@ var isCaretMoving = function(args) {
 }
 
 var positionChanged = function(line, column) {
-  return !last || line !== last[0] || column !== last[1];
+  var myAuthorId = pad.getUserId();
+  var lastPositionOfMyCaret = currentCaretLocations[myAuthorId];
+  return !lastPositionOfMyCaret || line !== lastPositionOfMyCaret.line || column !== lastPositionOfMyCaret.column;
 }
 
 var sendMessageWithCaretPosition = function(line, column) {
@@ -88,52 +114,60 @@ var sendMessageWithCaretPosition = function(line, column) {
     myAuthorId : myAuthorId
   }
 
-  // console.log("Sent message", message);
   // Send the cursor position message to the server
   pad.collabClient.sendMessage(message);
+  // Update set of caretLocations
+  currentCaretLocations[myAuthorId] = buildCaretLocationData(myAuthorId, line, column);
 }
 
 exports.handleClientMessage_USER_NEWINFO = function(hook, context, cb) {
-  if (last) {
+  var myAuthorId = pad.getUserId();
+  var lastPositionOfMyCaret = currentCaretLocations[myAuthorId];
+
+  if (lastPositionOfMyCaret) {
     // we need to send our position to user who joined the pad, so our caret indicator is created there
-    sendMessageWithCaretPosition(last[0], last[1]);
+    sendMessageWithCaretPosition(lastPositionOfMyCaret[0], lastPositionOfMyCaret[1]);
   }
 }
 
 exports.handleClientMessage_USER_LEAVE = function(hook, context, cb) {
-  // remove caret indicator for author
   var userId = context.payload.userId;
   var authorClass = exports.getAuthorClassName(userId);
   var authorClassName = "caret-" + authorClass;
-  getOuterDoc().find("." + authorClassName).remove();
+
+  // remove caret indicator on editor
+  utils.getOuterDoc().find("." + authorClassName).remove();
+  // update set of caretLocations
+  delete currentCaretLocations[userId];
 }
 
 // A huge problem with this is that it runs BEFORE the dom has been updated so edit events are always late..
 exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
   if (context.payload.action !== 'cursorPosition') return false;
 
-  // an author has sent this client a cursor position, we need to show it in the dom
-
   var authorId = context.payload.authorId;
-  var authorName = context.payload.authorName;
-  var line = context.payload.locationY + 1; // +1 as Etherpad line numbers start at 1
-  var column = context.payload.locationX;
+  var line     = context.payload.locationY;
+  var column   = context.payload.locationX;
 
-  var caretLocationData = {
+  // Don't process our own caret position
+  if (pad.getUserId() === authorId) return false;
+
+  // an author has sent this client a cursor position, we need to show it in the dom
+  var caretLocationData = buildCaretLocationData(authorId, line, column);
+  if (!initiated) {
+    // we are not ready yet to show caret indicator, so store it for when we are
+    pendingCaretLocations[authorId] = caretLocationData;
+  } else {
+    buildAndShowIndicatorFor([caretLocationData]);
+  }
+}
+
+var buildCaretLocationData = function(authorId, line, column) {
+  return {
     authorId: authorId,
     line: line,
     column: column,
   };
-
-  if (pad.getUserId() === authorId) {
-    // Dont process our own caret position (yes we do get it..) -- This is not a bug
-    return false;
-  } else if (!initiated) {
-    // we are not ready yet to show caret indicator, so store it for when we are
-    otherCaretLocations[authorId] = caretLocationData;
-  } else {
-    buildAndShowIndicatorFor([caretLocationData]);
-  }
 }
 
 var buildAndShowIndicatorFor = function(caretLocations) {
@@ -142,10 +176,15 @@ var buildAndShowIndicatorFor = function(caretLocations) {
   for (var i = 0; i < caretLocations.length; i++) {
     var caretLocation = caretLocations[i];
     var authorId = caretLocation.authorId;
-    var line = caretLocation.line;
-    var column = caretLocation.column;
-    var position = caretPosition.getCaretPosition(line, column);
+    var line     = caretLocation.line + 1; // +1 as Etherpad line numbers start at 1
+    var column   = caretLocation.column;
 
+    currentCaretLocations[authorId] = caretLocation;
+
+    // Don't show our own caret
+    if (pad.getUserId() === authorId) continue;
+
+    var position = caretPosition.getCaretPosition(line, column);
     if (position) {
       $.each(users, function(index, user) {
         if (user.userId === authorId) {
@@ -175,9 +214,10 @@ var buildIndicator = function(user, position) {
   var color = getAuthorColor(user);
   var authorName = getAuthorName(user);
   var classes = "class='caretindicator " + location + "'";
+  var timestamp = Date.now();
 
   // Create a new Div for this author
-  var $indicator = $("<div " + classes + " title="+authorName+"><p>"+authorName+"</p></div>");
+  var $indicator = $("<div " + classes + " timestamp="+timestamp+"><p>"+authorName+"</p></div>");
   $indicator.css({
     height:  INDICATOR_HEIGHT + "px",
     left: position.left + "px",
@@ -189,7 +229,7 @@ var buildIndicator = function(user, position) {
 }
 
 var showIndicator = function($indicator, authorId) {
-  var $outerdoc = getOuterDoc();
+  var $outerdoc = utils.getOuterDoc();
 
   var authorClass = exports.getAuthorClassName(authorId);
   var authorClassName = "caret-" + authorClass;
@@ -210,11 +250,4 @@ var fadeOutCaretIndicator = function($indicator) {
       });
     }, clientVars.ep_cursortrace.fade_out_timeout);
   }
-}
-
-// Easier access to outer doc body
-var $outerDocBody;
-var getOuterDoc = function() {
-  $outerDocBody = $outerDocBody || $('iframe[name="ace_outer"]').contents().find("#outerdocbody");
-  return $outerDocBody;
 }
