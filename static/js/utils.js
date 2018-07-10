@@ -20,3 +20,9 @@ exports.getOuterDoc = function() {
   $outerDocBody = $outerDocBody || exports.getPadOuter().find("#outerdocbody");
   return $outerDocBody;
 }
+
+exports.getLineOnEditor = function(lineNumber) {
+  // +1 as Etherpad line numbers start at 0
+  var nthChild = lineNumber + 1;
+  return exports.getPadInner().find('#innerdocbody > div:nth-child(' + nthChild + ')');
+}

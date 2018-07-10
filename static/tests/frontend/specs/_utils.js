@@ -64,6 +64,12 @@ ep_cursortrace_test_helper.utils = {
     return { top: top, left: left };
   },
 
+  getDistanceBetweenCaretIndicatorAndBeginningOfLine: function(lineNumber) {
+    var utils = ep_cursortrace_test_helper.utils;
+    var $beginningOfLine = utils.getLine(lineNumber).find('span').first();
+    return utils.getDistanceBetweenCaretIndicatorAndTarget($beginningOfLine, false);
+  },
+
   getDistanceBetweenCaretIndicatorAndEndOfLine: function(lineNumber) {
     var utils = ep_cursortrace_test_helper.utils;
     var $endOfLine = utils.getLine(lineNumber).find('span').last();
@@ -94,5 +100,13 @@ ep_cursortrace_test_helper.utils = {
     helper.waitFor(function() {
       return utils.getCaretIndicator().is(':visible');
     }, 1900).done(done);
+  },
+
+  waitForCaretIndicatorToBeVisibleForBothUsers: function(done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+    utils.waitForCaretIndicatorToBeVisible(function() {
+      multipleUsers.performAsOtherUser(utils.waitForCaretIndicatorToBeVisible, done);
+    });
   },
 }

@@ -18,7 +18,7 @@ var utils = require('./utils');
 */
 exports.getCaretPosition = function(caretLine, caretColumn) {
   // Are we ready to get caret position?
-  var $caretDiv = utils.getPadInner().find('#innerdocbody > div:nth-child(' + caretLine + ')');
+  var $caretDiv = utils.getLineOnEditor(caretLine);
   if ($caretDiv.length === 0) return;
 
   // Step 1:

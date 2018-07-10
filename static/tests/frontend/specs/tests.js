@@ -35,6 +35,10 @@ describe('ep_cursortrace - Basic Tests', function () {
       done();
     }
 
+    before(function(done) {
+      utils.waitForCaretIndicatorToBeVisibleForBothUsers(done);
+    });
+
     it('updates the caret indicator for this user', function(done) {
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         // caret is at the end of the line; caret indicator should be there too
@@ -53,6 +57,13 @@ describe('ep_cursortrace - Basic Tests', function () {
       done();
     }
 
+    before(function(done) {
+      this.timeout(5000);
+      utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
+        makeSureCaretOfOtherUserIsAtEndOfLine(TARGET_LINE, done);
+      });
+    });
+
     it('updates the caret indicator of the other user', function(done) {
       utils.executeAndWaitForCaretIndicatorToMove(editLine, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
@@ -68,25 +79,26 @@ describe('ep_cursortrace - Basic Tests', function () {
 
     before(function(done) {
       this.timeout(4000);
-
-      originalPosition = utils.getCaretIndicatorPosition();
-
-      // [user 2] add bold to part of the middle of the line
-      multipleUsers.startActingLikeOtherUser();
-      selectTextInTheMiddleOfLine(TARGET_LINE);
-      addBoldToSelectedText()
-
-      // [user 1] caret indicator should move to the bold text
-      multipleUsers.startActingLikeThisUser();
-      utils.waitForCaretIndicatorToMove(originalPosition, function() {
+      utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
         originalPosition = utils.getCaretIndicatorPosition();
 
-        // [user 2] go back to the end of line
+        // [user 2] add bold to part of the middle of the line
         multipleUsers.startActingLikeOtherUser();
-        placeCaretAtEndOfLine(TARGET_LINE);
+        selectTextInTheMiddleOfLine(TARGET_LINE);
+        addBoldToSelectedText()
 
+        // [user 1] caret indicator should move to the bold text
         multipleUsers.startActingLikeThisUser();
-        done();
+        utils.waitForCaretIndicatorToMove(originalPosition, function() {
+          originalPosition = utils.getCaretIndicatorPosition();
+
+          // [user 2] go back to the end of line
+          multipleUsers.startActingLikeOtherUser();
+          placeCaretAtEndOfLine(TARGET_LINE);
+
+          multipleUsers.startActingLikeThisUser();
+          done();
+        });
       });
     });
 
@@ -167,5 +179,25 @@ describe('ep_cursortrace - Basic Tests', function () {
   var addBoldToSelectedText = function() {
     var $boldButton = helper.padChrome$('.buttonicon-bold');
     $boldButton.click();
+  }
+
+  var _buildFunctionToMoveCaret = function(lineNumber, execCaretMove) {
+    return function(done) {
+      multipleUsers.startActingLikeOtherUser();
+      execCaretMove(lineNumber);
+      multipleUsers.startActingLikeThisUser();
+      done();
+    }
+  }
+
+  var makeSureCaretOfOtherUserIsAtEndOfLine = function(lineNumber, done) {
+    var moveCaretToMiddleOfLine = _buildFunctionToMoveCaret(lineNumber, selectTextInTheMiddleOfLine);
+    var moveCaretToEndOfLine    = _buildFunctionToMoveCaret(lineNumber, placeCaretAtEndOfLine);
+
+    // move caret to middle of line, so we're able to detect when it is moved to the end
+    // and caret indicator was updated
+    utils.executeAndWaitForCaretIndicatorToMove(moveCaretToMiddleOfLine, function() {
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEndOfLine, done);
+    });
   }
 });
