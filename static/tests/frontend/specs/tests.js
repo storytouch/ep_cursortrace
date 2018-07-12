@@ -28,11 +28,7 @@ describe('ep_cursortrace - Basic Tests', function () {
 
   context('when other user moves the caret', function() {
     var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      placeCaretAtEndOfLine(TARGET_LINE);
-
-      multipleUsers.startActingLikeThisUser();
-      done();
+      utils.placeCaretOfOtherUserAtEndOfLine(TARGET_LINE, done);
     }
 
     before(function(done) {
@@ -53,7 +49,7 @@ describe('ep_cursortrace - Basic Tests', function () {
   context('when this user edits the line where caret of other user is', function() {
     var editLine = function(done) {
       var $firstLine = utils.getLine(TARGET_LINE);
-      $firstLine.sendkeys('{selectall}{leftarrow}').sendkeys('!');
+      $firstLine.sendkeys('{selectall}{leftarrow}').sendkeys('!!');
       done();
     }
 
@@ -65,12 +61,13 @@ describe('ep_cursortrace - Basic Tests', function () {
     });
 
     it('updates the caret indicator of the other user', function(done) {
+      this.timeout(3000);
       utils.executeAndWaitForCaretIndicatorToMove(editLine, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      });
+      }, 2900);
     });
   });
 
@@ -93,11 +90,7 @@ describe('ep_cursortrace - Basic Tests', function () {
           originalPosition = utils.getCaretIndicatorPosition();
 
           // [user 2] go back to the end of line
-          multipleUsers.startActingLikeOtherUser();
-          placeCaretAtEndOfLine(TARGET_LINE);
-
-          multipleUsers.startActingLikeThisUser();
-          done();
+          utils.placeCaretOfOtherUserAtEndOfLine(TARGET_LINE, done);
         });
       });
     });
@@ -114,29 +107,32 @@ describe('ep_cursortrace - Basic Tests', function () {
 
   context('when other user places caret on an empty line', function() {
     before(function(done) {
-      // [user 2] create an empty line at the end of pad
-      multipleUsers.startActingLikeOtherUser();
-      var $lines = helper.padInner$('div');
-      var originalNumberOfLines = $lines.length;
-      var $lastLine = $lines.last();
-      $lastLine.html($lastLine.html() + '<div/>');
-      // wait for line to be created
-      helper.waitFor(function() {
-        return helper.padInner$('div').length === originalNumberOfLines + 1;
-      }).done(function() {
-        multipleUsers.startActingLikeThisUser();
-        done();
+      utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
+
+        // [user 2] create an empty line at the end of pad
+        multipleUsers.startActingLikeOtherUser();
+        var $lines = helper.padInner$('div');
+        var originalNumberOfLines = $lines.length;
+        var $lastLine = $lines.last();
+        $lastLine.html($lastLine.html() + '<div/>');
+
+        // wait for line to be created for both users
+        helper.waitFor(function() {
+          return helper.padInner$('div').length === originalNumberOfLines + 1;
+        }).done(function() {
+          multipleUsers.startActingLikeThisUser();
+          helper.waitFor(function() {
+            return helper.padInner$('div').length === originalNumberOfLines + 1;
+          }).done(done);
+        });
       });
     });
 
     var moveCaretToEmptyLine = function(done) {
-      // [user 2] place caret on empty line
-      multipleUsers.startActingLikeOtherUser();
-      var $lastLine = helper.padInner$('div').last();
-      $lastLine.sendkeys('{selectall}{leftarrow}');
+      var lastLine = helper.padInner$('div').length - 1;
 
-      multipleUsers.startActingLikeThisUser();
-      done();
+      // [user 2] place caret on empty line
+      utils.placeCaretOfOtherUserAtEndOfLine(lastLine, done);
     }
 
     it('updates the caret indicator of the other user', function(done) {
@@ -144,11 +140,12 @@ describe('ep_cursortrace - Basic Tests', function () {
 
       utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEmptyLine, function() {
         var $emptyLine = helper.padInner$('div').last();
-        var distance = utils.getDistanceBetweenCaretIndicatorAndTarget($emptyLine);
 
-        expect(distance.left).to.be(0);
-        expect(distance.top).to.be(0);
-        done();
+        // it takes a while for the caret to go to the empty line
+        helper.waitFor(function() {
+          var distance = utils.getDistanceBetweenCaretIndicatorAndTarget($emptyLine);
+          return distance.left === 0 && distance.top === 0;
+        }).done(done);
       });
     });
   });
@@ -197,7 +194,7 @@ describe('ep_cursortrace - Basic Tests', function () {
     // move caret to middle of line, so we're able to detect when it is moved to the end
     // and caret indicator was updated
     utils.executeAndWaitForCaretIndicatorToMove(moveCaretToMiddleOfLine, function() {
-      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEndOfLine, done);
-    });
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEndOfLine, done, 2000);
+    }, 2000);
   }
 });

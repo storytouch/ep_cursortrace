@@ -66,7 +66,7 @@ ep_cursortrace_test_helper.utils = {
 
   getDistanceBetweenCaretIndicatorAndBeginningOfLine: function(lineNumber) {
     var utils = ep_cursortrace_test_helper.utils;
-    var $beginningOfLine = utils.getLine(lineNumber).find('span').first();
+    var $beginningOfLine = utils.getLine(lineNumber).find('span:not(:empty)').first();
     return utils.getDistanceBetweenCaretIndicatorAndTarget($beginningOfLine, false);
   },
 
@@ -80,18 +80,18 @@ ep_cursortrace_test_helper.utils = {
     return ep_cursortrace_test_helper.utils.getCaretIndicator().position();
   },
 
-  waitForCaretIndicatorToMove: function(originalPosition, done) {
+  waitForCaretIndicatorToMove: function(originalPosition, done, timeout) {
     helper.waitFor(function() {
       var position = ep_cursortrace_test_helper.utils.getCaretIndicatorPosition();
       return position.left !== originalPosition.left || position.top !== originalPosition.top;
-    }).done(done).fail(done);
+    }, timeout || 1000).done(done);
   },
 
-  executeAndWaitForCaretIndicatorToMove: function(execFunction, done) {
+  executeAndWaitForCaretIndicatorToMove: function(execFunction, done, timeout) {
     var utils = ep_cursortrace_test_helper.utils;
     var originalPosition = utils.getCaretIndicatorPosition();
     execFunction(function() {
-      utils.waitForCaretIndicatorToMove(originalPosition, done);
+      utils.waitForCaretIndicatorToMove(originalPosition, done, timeout);
     });
   },
 
@@ -108,5 +108,24 @@ ep_cursortrace_test_helper.utils = {
     utils.waitForCaretIndicatorToBeVisible(function() {
       multipleUsers.performAsOtherUser(utils.waitForCaretIndicatorToBeVisible, done);
     });
+  },
+
+  placeCaretOfOtherUserAtBeginningOfLine: function(lineNumber, done) {
+    ep_cursortrace_test_helper.utils._placeCaretOfOtherUserAtLine(lineNumber, false, done);
+  },
+  placeCaretOfOtherUserAtEndOfLine: function(lineNumber, done) {
+    ep_cursortrace_test_helper.utils._placeCaretOfOtherUserAtLine(lineNumber, true, done);
+  },
+  _placeCaretOfOtherUserAtLine: function(lineNumber, atEndOfLine, done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+
+    multipleUsers.startActingLikeOtherUser();
+    var $line = utils.getLine(lineNumber);
+    var command = atEndOfLine ? '{selectall}{rightarrow}' : '{selectall}{leftarrow}';
+    $line.sendkeys(command);
+
+    multipleUsers.startActingLikeThisUser();
+    done();
   },
 }

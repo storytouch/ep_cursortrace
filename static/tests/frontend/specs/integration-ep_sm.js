@@ -44,12 +44,7 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
 
   context('when other user places caret on a SM hidden for this user', function() {
     var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      var $line = utils.getLine(LINE_WITH_HEADING - 1);
-      $line.sendkeys('{selectall}{rightarrow}');
-
-      multipleUsers.startActingLikeThisUser();
-      done();
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_WITH_HEADING - 1, done);
     }
 
     it('shows caret indicator on beginning of line with heading', function(done) {
@@ -64,12 +59,7 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
 
   context('when other user places caret on a line after a SM hidden for this user', function() {
     var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      var $line = utils.getLine(LINE_AFTER_SM);
-      $line.sendkeys('{selectall}{rightarrow}');
-
-      multipleUsers.startActingLikeThisUser();
-      done();
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_AFTER_SM, done);
     }
 
     it('updates the caret indicator for this user', function(done) {
@@ -116,12 +106,7 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
 
   context('when other user places caret on a line before a SM hidden for this user', function() {
     var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      var $line = utils.getLine(LINE_BEFORE_SM);
-      $line.sendkeys('{selectall}{rightarrow}');
-
-      multipleUsers.startActingLikeThisUser();
-      done();
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_BEFORE_SM, done);
     }
 
     it('updates the caret indicator for this user', function(done) {

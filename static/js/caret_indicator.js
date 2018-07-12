@@ -52,6 +52,8 @@ exports.buildAndShowIndicators = function(caretLocations) {
           fadeOutCaretIndicator($indicator);
         }
       });
+    } else {
+      removeCaretOf(authorId);
     }
   }
 }
@@ -111,10 +113,11 @@ var fadeOutCaretIndicator = function($indicator) {
   }
 }
 
-exports.removeCaretOf = function(userId) {
-  var authorClass = getAuthorClassName(userId);
+exports.removeCaretOf = function(authorId) {
+  var authorClass = getAuthorClassName(authorId);
   var authorClassName = "caret-" + authorClass;
 
   // remove caret indicator on editor
   utils.getOuterDoc().find("." + authorClassName).remove();
 }
+var removeCaretOf = exports.removeCaretOf;

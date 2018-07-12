@@ -146,6 +146,8 @@ var copyStyles = function(fromNode, toNode) {
     fontWeight:computedCSS.fontWeight,
     fontFamily:computedCSS.fontFamily,
     lineHeight:computedCSS.lineHeight,
+    display:computedCSS.display,
+    visibility:computedCSS.visibility,
   });
 }
 
