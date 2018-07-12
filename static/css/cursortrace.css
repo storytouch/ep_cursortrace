@@ -30,3 +30,8 @@
 .caretindicator.stickDown p {
   margin-top: -14px;
 }
+
+/* hide caret indicator when pad is disabled */
+#outerdocbody.disabled .caretindicator {
+  display: none;
+}

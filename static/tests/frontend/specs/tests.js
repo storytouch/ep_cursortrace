@@ -156,9 +156,7 @@ describe('ep_cursortrace - Basic Tests', function () {
     });
 
     it('removes the caret indicator', function(done) {
-      helper.waitFor(function() {
-        return !utils.getCaretIndicator().is(':visible');
-      }, 1900).done(done);
+      utils.waitForCaretIndicatorToBeHidden(done);
     });
   });
 

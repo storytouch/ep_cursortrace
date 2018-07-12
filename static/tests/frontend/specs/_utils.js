@@ -102,6 +102,13 @@ ep_cursortrace_test_helper.utils = {
     }, 1900).done(done);
   },
 
+  waitForCaretIndicatorToBeHidden: function(done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    helper.waitFor(function() {
+      return !utils.getCaretIndicator().is(':visible');
+    }, 1900).done(done);
+  },
+
   waitForCaretIndicatorToBeVisibleForBothUsers: function(done) {
     var utils = ep_cursortrace_test_helper.utils;
     var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;

@@ -2,6 +2,7 @@ var LINE_CHANGED_EVENT = require('ep_comments_page/static/js/utils').LINE_CHANGE
 var utils = require('./utils');
 var caretIndicator = require('./caret_indicator');
 var caretLocationManager = require('./caret_location_manager');
+var hideCaretsOnDisabledEditor = require('./hide_carets_on_disabled_editor');
 
 var TIME_TO_UPDATE_CARETS_POSITION = 500;
 var initiated = false;
@@ -13,6 +14,7 @@ exports.postAceInit = function(hook_name, args, cb) {
   pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
   pad.plugins.ep_cursortrace.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
 
+  hideCaretsOnDisabledEditor.initialize();
   showCaretOfAuthorsAlreadyOnPad();
   updateCaretsWhenAnUpdateMightHadAffectedTheirPositions();
 };
