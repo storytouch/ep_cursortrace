@@ -10,10 +10,9 @@ var initiated = false;
 exports.postAceInit = function(hook_name, args, cb) {
   initiated = true;
 
-  pad.plugins = pad.plugins || {};
-  pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
-  pad.plugins.ep_cursortrace.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
-  pad.plugins.ep_cursortrace.utils = utils.initialize();
+  var thisPlugin = _getThisPlugin();
+  thisPlugin.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
+  thisPlugin.utils = utils.initialize();
 
   hideCaretsOnDisabledEditor.initialize();
   caretIndicator.initialize();
@@ -22,12 +21,14 @@ exports.postAceInit = function(hook_name, args, cb) {
 };
 
 var showCaretOfAuthorsAlreadyOnPad = function() {
+  var caretLocationManager = _getCaretLocationManager();
   caretLocationManager.activatePendingCaretLocations();
   var caretLocations = caretLocationManager.getCaretLocations();
   caretIndicator.buildAndShowIndicators(caretLocations);
 }
 
 var buildAndShowIndicatorsAfterLine = function(lineNumber) {
+  var caretLocationManager = _getCaretLocationManager();
   var caretLocations = caretLocationManager.getCaretLocationsAfterLine(lineNumber);
   caretIndicator.buildAndShowIndicators(caretLocations);
 }
@@ -50,6 +51,7 @@ exports.aceEditEvent = function(hook_name, args, cb) {
     var line = rep.selStart[0];
     // line might be a line with line attributes, so we need to ignore the '*' on the text
     var column = rep.selStart[1] - rep.lines.atIndex(line).lineMarker;
+    var caretLocationManager = _getCaretLocationManager();
     if (caretLocationManager.myPositionChanged(line, column)) {
       sendMessageWithCaretPosition(line, column);
     }
@@ -80,11 +82,13 @@ var sendMessageWithCaretPosition = function(line, column) {
   // Send the cursor position message to the server
   pad.collabClient.sendMessage(message);
   // Update set of caretLocations
+  var caretLocationManager = _getCaretLocationManager();
   caretLocationManager.updateCaretLocation(myAuthorId, line, column);
 }
 
 // we need to send our position to user who joined the pad, so our caret indicator is created there
 exports.handleClientMessage_USER_NEWINFO = function(hook, context, cb) {
+  var caretLocationManager = _getCaretLocationManager();
   var lastPositionOfMyCaret = caretLocationManager.getMyCurrentCaretLocation();
   if (lastPositionOfMyCaret) {
     sendMessageWithCaretPosition(lastPositionOfMyCaret.line, lastPositionOfMyCaret.column);
@@ -96,6 +100,7 @@ exports.handleClientMessage_USER_LEAVE = function(hook, context, cb) {
   // remove caret indicator on editor
   caretIndicator.removeCaretOf(userId);
   // update set of caretLocations
+  var caretLocationManager = _getCaretLocationManager();
   caretLocationManager.removeCaretLocationOf(userId);
 }
 
@@ -111,6 +116,7 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
   if (pad.getUserId() === authorId) return false;
 
   // an author has sent this client a cursor position, we need to show it in the dom
+  var caretLocationManager = _getCaretLocationManager();
   if (!initiated) {
     // we are not ready yet to show caret indicator, so store it for when we are
     caretLocationManager.updatePendingCaretLocation(authorId, line, column);
@@ -118,4 +124,16 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
     var caretLocation = caretLocationManager.updateCaretLocation(authorId, line, column);
     caretIndicator.buildAndShowIndicators([caretLocation]);
   }
+}
+
+var _getCaretLocationManager = function() {
+  var thisPlugin = _getThisPlugin();
+  thisPlugin.caretLocationManager = thisPlugin.caretLocationManager || caretLocationManager.initialize();
+  return thisPlugin.caretLocationManager;
+}
+
+var _getThisPlugin = function() {
+  pad.plugins = pad.plugins || {};
+  pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
+  return pad.plugins.ep_cursortrace;
 }
