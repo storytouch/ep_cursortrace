@@ -10,27 +10,33 @@ ep_cursortrace_test_helper.utils = {
 
   openPadForMultipleUsers: function(test, createScript, done) {
     helper.newPad(function() {
+      var utils = ep_cursortrace_test_helper.utils;
+      var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+      var apiUtils = ep_cursortrace_test_helper.apiUtils;
+
+      apiUtils.startListeningToApiEvents();
+      utils._speedUpCaretUpdate();
+
+      // force setting to not hide caret indicators after some time, so tests
+      // can take a while and still be successful
+      utils._makeSureCaretIndicatorWillBeAlwaysVisible();
+
       createScript(function() {
-        var utils = ep_cursortrace_test_helper.utils;
-        utils.speedUpCaretUpdate();
-
-        // force setting to not hide caret indicators after some time, so tests
-        // can take a while and still be successful
-        utils.makeSureCaretIndicatorWillBeAlwaysVisible();
-
-        ep_script_copy_cut_paste_test_helper.multipleUsers.openSamePadOnWithAnotherUser(done);
+        multipleUsers.openSamePadOnWithAnotherUser(function() {
+          utils._storeUserIds(done);
+        });
       });
     });
 
     test.timeout(60000);
   },
 
-  makeSureCaretIndicatorWillBeAlwaysVisible: function() {
+  _makeSureCaretIndicatorWillBeAlwaysVisible: function() {
     var pluginSettings = helper.padChrome$.window.clientVars.ep_cursortrace;
     pluginSettings.fade_out_timeout = 0;
   },
 
-  speedUpCaretUpdate: function() {
+  _speedUpCaretUpdate: function() {
     var thisPlugin = helper.padChrome$.window.pad.plugins.ep_cursortrace;
     thisPlugin.timeToUpdateCaretPosition = 0;
 
@@ -38,6 +44,18 @@ ep_cursortrace_test_helper.utils = {
     // the timeout there
     var ep_comments_page = helper.padChrome$.window.pad.plugins.ep_comments_page;
     ep_comments_page.commentHandler.lineChangeEventTriggerer.padChangedListener.timeout = 0;
+  },
+
+  _storeUserIds: function(done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+
+    utils.myUserId = helper.padChrome$.window.pad.getUserId();
+    multipleUsers.startActingLikeOtherUser();
+    utils.otherUserId = helper.padChrome$.window.pad.getUserId();
+    multipleUsers.startActingLikeThisUser();
+
+    done();
   },
 
   getCaretIndicator: function() {
