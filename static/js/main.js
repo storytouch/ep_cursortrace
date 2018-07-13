@@ -11,8 +11,7 @@ var initiated = false;
 exports.postAceInit = function(hook_name, args, cb) {
   initiated = true;
   _getThisPlugin().timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
-  hideCaretsOnDisabledEditor.initialize();
-  caretIndicator.initialize();
+  hideCaretsOnDisabledEditor.startListeningToEditorDisabling();
   showCaretOfAuthorsAlreadyOnPad();
   updateCaretsWhenAnUpdateMightHadAffectedTheirPositions();
 };

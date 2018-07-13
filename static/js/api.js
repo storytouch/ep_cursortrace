@@ -1,3 +1,5 @@
+var caretIndicator = require('./caret_indicator');
+
 exports.initialize = function() {
   return new api();
 }
@@ -8,7 +10,6 @@ var api = function() {
   // messages coming from outside
   this.GO_TO_CARET_OF_USER = 'GO_TO_CARET_OF_USER';
 
-  this.onGoToCaretOfUser = function() {};
   this.startListeningToInboundMessages();
 }
 
@@ -16,13 +17,9 @@ api.prototype.startListeningToInboundMessages = function() {
   var self = this;
   window.addEventListener('message', function(e) {
     if (e.data.type === self.GO_TO_CARET_OF_USER) {
-      self.onGoToCaretOfUser(e.data.userId);
+      caretIndicator.scrollEditorToShowCaretIndicatorOf(e.data.userId);
     }
   });
-}
-
-api.prototype.setHandleGoToCaretOfUser = function(fn) {
-  this.onGoToCaretOfUser = fn;
 }
 
 /*

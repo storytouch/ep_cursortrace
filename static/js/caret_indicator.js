@@ -7,11 +7,7 @@ var caretPosition = require('./caret_position');
 var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 
-exports.initialize = function() {
-  pad.plugins.ep_cursortrace.api.setHandleGoToCaretOfUser(scrollEditorToShowCaretIndicatorOf);
-}
-
-var scrollEditorToShowCaretIndicatorOf = function(authorId) {
+exports.scrollEditorToShowCaretIndicatorOf = function(authorId) {
   var $caretIndicator = getCaretIndicatorOf(authorId);
   $caretIndicator.get(0).scrollIntoView({ behavior: 'smooth' });
 }
