@@ -38,25 +38,75 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
     smUtils = ep_script_scene_marks_test_helper.utils;
 
     utils.openPadForMultipleUsers(this, createScript, function() {
-      // wait for both caret indicators to be shown
-      utils.waitForCaretIndicatorToBeVisible(function() {
-        multipleUsers.performAsOtherUser(utils.waitForCaretIndicatorToBeVisible, done);
-      });
+      utils.waitForCaretIndicatorToBeVisibleForBothUsers(done);
     });
   });
 
   context('when other user places caret on a SM hidden for this user', function() {
-    it('shows caret indicator on beginning of line with heading');
+    var moveCaret = function(done) {
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_WITH_HEADING - 1, done);
+    }
+
+    it('shows caret indicator on beginning of line with heading', function(done) {
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
+        var distance = utils.getDistanceBetweenCaretIndicatorAndBeginningOfLine(LINE_WITH_HEADING);
+        expect(distance.left).to.be(0);
+        expect(distance.top).to.be(0);
+        done();
+      });
+    });
+  });
+
+  context('when other user places caret on a line after a SM hidden for this user', function() {
+    var moveCaret = function(done) {
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_AFTER_SM, done);
+    }
+
+    it('updates the caret indicator for this user', function(done) {
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
+        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_AFTER_SM);
+        expect(distance.left).to.be(0);
+        expect(distance.top).to.be(0);
+        done();
+      });
+    });
+
+    context('and this user opens the SM', function() {
+      var originalTimestamp;
+
+      before(function() {
+        originalTimestamp = utils.getCaretIndicator().attr('timestamp');
+        if (!originalTimestamp) {
+          utils.failTest('Timestamp not set on caret indicator');
+        }
+
+        smUtils.clickOnSceneMarkButtonOfLine(LINE_WITH_HEADING);
+      });
+
+      after(function() {
+        // close SM again
+        smUtils.clickOnSceneMarkButtonOfLine(LINE_WITH_HEADING);
+      });
+
+      it('updates the caret indicator', function(done) {
+        helper.waitFor(function() {
+          var timestamp = utils.getCaretIndicator().attr('timestamp');
+          return timestamp !== originalTimestamp;
+        }, 1900).done(done);
+      });
+
+      it('moves the caret indicator to the new position of the caret of the other user', function(done) {
+        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_AFTER_SM);
+        expect(distance.left).to.be(0);
+        expect(distance.top).to.be(0);
+        done();
+      });
+    });
   });
 
   context('when other user places caret on a line before a SM hidden for this user', function() {
     var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      var $line = utils.getLine(LINE_BEFORE_SM);
-      $line.sendkeys('{selectall}{rightarrow}');
-
-      multipleUsers.startActingLikeThisUser();
-      done();
+      utils.placeCaretOfOtherUserAtEndOfLine(LINE_BEFORE_SM, done);
     }
 
     it('updates the caret indicator for this user', function(done) {
@@ -97,60 +147,8 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
         });
       });
 
-      it('keeps the caret indicator on the right position', function(done) {
+      it('keeps the caret indicator close to the caret of the other user', function(done) {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_BEFORE_SM);
-        expect(distance.left).to.be(0);
-        expect(distance.top).to.be(0);
-        done();
-      });
-    });
-  });
-
-  context('when other user places caret on a line after a SM hidden for this user', function() {
-    var moveCaret = function(done) {
-      multipleUsers.startActingLikeOtherUser();
-      var $line = utils.getLine(LINE_AFTER_SM);
-      $line.sendkeys('{selectall}{rightarrow}');
-
-      multipleUsers.startActingLikeThisUser();
-      done();
-    }
-
-    it('updates the caret indicator for this user', function(done) {
-      utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
-        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_AFTER_SM);
-        expect(distance.left).to.be(0);
-        expect(distance.top).to.be(0);
-        done();
-      });
-    });
-
-    context('and this user opens the SM', function() {
-      var originalTimestamp;
-
-      before(function() {
-        originalTimestamp = utils.getCaretIndicator().attr('timestamp');
-        if (!originalTimestamp) {
-          utils.failTest('Timestamp not set on caret indicator');
-        }
-
-        smUtils.clickOnSceneMarkButtonOfLine(LINE_WITH_HEADING);
-      });
-
-      after(function() {
-        // close SM again
-        smUtils.clickOnSceneMarkButtonOfLine(LINE_WITH_HEADING);
-      });
-
-      it('updates the caret indicator', function(done) {
-        helper.waitFor(function() {
-          var timestamp = utils.getCaretIndicator().attr('timestamp');
-          return timestamp !== originalTimestamp;
-        }, 1900).done(done);
-      });
-
-      it('moves the caret indicator to the right position', function(done) {
-        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_AFTER_SM);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();

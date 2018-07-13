@@ -12,7 +12,6 @@ ep_cursortrace_test_helper.utils = {
     helper.newPad(function() {
       createScript(function() {
         var utils = ep_cursortrace_test_helper.utils;
-
         utils.speedUpCaretUpdate();
 
         // force setting to not hide caret indicators after some time, so tests
@@ -64,28 +63,32 @@ ep_cursortrace_test_helper.utils = {
     return { top: top, left: left };
   },
 
+  getDistanceBetweenCaretIndicatorAndBeginningOfLine: function(lineNumber) {
+    var $beginningOfLine = this.getLine(lineNumber).find('span:not(:empty)').first();
+    return this.getDistanceBetweenCaretIndicatorAndTarget($beginningOfLine, false);
+  },
+
   getDistanceBetweenCaretIndicatorAndEndOfLine: function(lineNumber) {
-    var utils = ep_cursortrace_test_helper.utils;
-    var $endOfLine = utils.getLine(lineNumber).find('span').last();
-    return utils.getDistanceBetweenCaretIndicatorAndTarget($endOfLine, true);
+    var $endOfLine = this.getLine(lineNumber).find('span').last();
+    return this.getDistanceBetweenCaretIndicatorAndTarget($endOfLine, true);
   },
 
   getCaretIndicatorPosition: function() {
-    return ep_cursortrace_test_helper.utils.getCaretIndicator().position();
+    return this.getCaretIndicator().position();
   },
 
-  waitForCaretIndicatorToMove: function(originalPosition, done) {
+  waitForCaretIndicatorToMove: function(originalPosition, done, timeout) {
     helper.waitFor(function() {
       var position = ep_cursortrace_test_helper.utils.getCaretIndicatorPosition();
       return position.left !== originalPosition.left || position.top !== originalPosition.top;
-    }).done(done).fail(done);
+    }, timeout || 1000).done(done);
   },
 
-  executeAndWaitForCaretIndicatorToMove: function(execFunction, done) {
+  executeAndWaitForCaretIndicatorToMove: function(execFunction, done, timeout) {
     var utils = ep_cursortrace_test_helper.utils;
     var originalPosition = utils.getCaretIndicatorPosition();
     execFunction(function() {
-      utils.waitForCaretIndicatorToMove(originalPosition, done);
+      utils.waitForCaretIndicatorToMove(originalPosition, done, timeout);
     });
   },
 
@@ -94,5 +97,38 @@ ep_cursortrace_test_helper.utils = {
     helper.waitFor(function() {
       return utils.getCaretIndicator().is(':visible');
     }, 1900).done(done);
+  },
+
+  waitForCaretIndicatorToBeHidden: function(done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    helper.waitFor(function() {
+      return !utils.getCaretIndicator().is(':visible');
+    }, 1900).done(done);
+  },
+
+  waitForCaretIndicatorToBeVisibleForBothUsers: function(done) {
+    var utils = ep_cursortrace_test_helper.utils;
+    var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+    utils.waitForCaretIndicatorToBeVisible(function() {
+      multipleUsers.performAsOtherUser(utils.waitForCaretIndicatorToBeVisible, done);
+    });
+  },
+
+  placeCaretOfOtherUserAtBeginningOfLine: function(lineNumber, done) {
+    this._placeCaretOfOtherUserAtLine(lineNumber, false, done);
+  },
+  placeCaretOfOtherUserAtEndOfLine: function(lineNumber, done) {
+    this._placeCaretOfOtherUserAtLine(lineNumber, true, done);
+  },
+  _placeCaretOfOtherUserAtLine: function(lineNumber, atEndOfLine, done) {
+    var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
+
+    multipleUsers.startActingLikeOtherUser();
+    var $line = this.getLine(lineNumber);
+    var command = atEndOfLine ? '{selectall}{rightarrow}' : '{selectall}{leftarrow}';
+    $line.sendkeys(command);
+
+    multipleUsers.startActingLikeThisUser();
+    done();
   },
 }
