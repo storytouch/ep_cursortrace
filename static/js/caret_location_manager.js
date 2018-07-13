@@ -1,9 +1,12 @@
+var api = require('./api');
+
 var currentCaretLocations = {};
 var pendingCaretLocations = {};
 
 exports.activatePendingCaretLocations = function() {
   currentCaretLocations = pendingCaretLocations;
   pendingCaretLocations = {};
+  sendNewUsersListOnApi();
 }
 
 exports.getCaretLocations = function() {
@@ -31,8 +34,15 @@ exports.myPositionChanged = function(line, column) {
 }
 
 exports.updateCaretLocation = function(authorId, line, column) {
+  var authorWasNotOnPadBefore = !currentCaretLocations[authorId];
+
   var caretLocation = buildCaretLocationData(authorId, line, column);
   currentCaretLocations[authorId] = caretLocation;
+
+  if (authorWasNotOnPadBefore) {
+    sendNewUsersListOnApi();
+  }
+
   return caretLocation;
 }
 
@@ -43,6 +53,7 @@ exports.updatePendingCaretLocation = function(authorId, line, column) {
 
 exports.removeCaretLocationOf = function(authorId) {
   delete currentCaretLocations[authorId];
+  sendNewUsersListOnApi();
 }
 
 exports.buildCaretLocationData = function(authorId, line, column) {
@@ -53,3 +64,15 @@ exports.buildCaretLocationData = function(authorId, line, column) {
   };
 }
 var buildCaretLocationData = exports.buildCaretLocationData;
+
+var sendNewUsersListOnApi = function() {
+  var authorsOnThisPad = Object.keys(currentCaretLocations);
+
+  // don't need to send myAuthorId on the api
+  var myAuthorId = pad.getUserId();
+  var authorsWithoutMe = authorsOnThisPad.filter(function(authorId) {
+    return authorId !== myAuthorId;
+  });
+
+  api.triggerListOfUsersOnThisPad(authorsWithoutMe);
+}

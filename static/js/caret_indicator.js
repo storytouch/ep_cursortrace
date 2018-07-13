@@ -1,6 +1,7 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var Security = require('ep_etherpad-lite/static/js/security');
 
+var api = require('./api');
 var utils = require('./utils');
 var hiddenLines = require('./hidden_lines');
 var caretPosition = require('./caret_position');
@@ -8,17 +9,14 @@ var caretPosition = require('./caret_position');
 var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 
-/*
-  Transform an authorId into a valid class name.
-    - replaces '.' on the id by a '-';
-    - replaces any non-numeric and non-alphabetic char into its charCode wrapped by "z";
-  Example: 'a.12#45' => 'a-12z35z45'
-*/
-var getAuthorClassName = function(authorId) {
-  var cleanedAuthorClass = (authorId || '').replace(/[^a-y0-9]/g, function(c) {
-    return c === '.' ? '-': 'z' + c.charCodeAt(0) + 'z';
-  });
-  return 'ep_cursortrace-' + cleanedAuthorClass;
+exports.initialize = function() {
+  api.startListeningToInboundMessages();
+  api.setHandleGoToCaretOfUser(scrollEditorToShowCaretIndicatorOf);
+}
+
+var scrollEditorToShowCaretIndicatorOf = function(authorId) {
+  var $caretIndicator = getCaretIndicatorOf(authorId);
+  $caretIndicator.get(0).scrollIntoView({ behavior: 'smooth' });
 }
 
 exports.buildAndShowIndicators = function(caretLocations) {
@@ -81,15 +79,13 @@ var buildIndicator = function(user, position) {
 }
 
 var showIndicator = function($indicator, authorId) {
+  var authorClassName = getAuthorClassName(authorId);
+  $indicator.addClass(authorClassName);
+
   var $outerdoc = utils.getOuterDoc();
-
-  var authorClass = getAuthorClassName(authorId);
-  var authorClassName = "caret-" + authorClass;
-
   // Remove all divs that already exist for this author
   $outerdoc.find("." + authorClassName).remove();
 
-  $indicator.addClass(authorClassName);
   $outerdoc.append($indicator);
 }
 
@@ -105,10 +101,24 @@ var fadeOutCaretIndicator = function($indicator) {
 }
 
 exports.removeCaretOf = function(authorId) {
-  var authorClass = getAuthorClassName(authorId);
-  var authorClassName = "caret-" + authorClass;
-
-  // remove caret indicator on editor
-  utils.getOuterDoc().find("." + authorClassName).remove();
+  getCaretIndicatorOf(authorId).remove();
 }
 var removeCaretOf = exports.removeCaretOf;
+
+var getCaretIndicatorOf = function(authorId) {
+  var authorClassName = getAuthorClassName(authorId);
+  return utils.getOuterDoc().find('.' + authorClassName);
+}
+
+/*
+  Transform an authorId into a valid class name.
+    - replaces '.' on the id by a '-';
+    - replaces any non-numeric and non-alphabetic char into its charCode wrapped by "z";
+  Example: 'a.12#45' => 'a-12z35z45'
+*/
+var getAuthorClassName = function(authorId) {
+  var cleanedAuthorClass = (authorId || '').replace(/[^a-y0-9]/g, function(c) {
+    return c === '.' ? '-': 'z' + c.charCodeAt(0) + 'z';
+  });
+  return 'caret-' + cleanedAuthorClass;
+}

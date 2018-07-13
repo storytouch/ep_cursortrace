@@ -15,6 +15,7 @@ exports.postAceInit = function(hook_name, args, cb) {
   pad.plugins.ep_cursortrace.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
 
   hideCaretsOnDisabledEditor.initialize();
+  caretIndicator.initialize();
   showCaretOfAuthorsAlreadyOnPad();
   updateCaretsWhenAnUpdateMightHadAffectedTheirPositions();
 };
