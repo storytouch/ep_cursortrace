@@ -1,4 +1,6 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var Security = require('ep_etherpad-lite/static/js/security');
+
 var utils = require('./utils');
 var hiddenLines = require('./hidden_lines');
 var caretPosition = require('./caret_position');
@@ -6,28 +8,17 @@ var caretPosition = require('./caret_position');
 var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 
-exports.getAuthorClassName = function(author) {
-  if (!author) return;
-  return 'ep_cursortrace-' + author.replace(/[^a-y0-9]/g, function(c) {
-    if (c == '.') return '-';
-    return 'z' + c.charCodeAt(0) + 'z';
+/*
+  Transform an authorId into a valid class name.
+    - replaces '.' on the id by a '-';
+    - replaces any non-numeric and non-alphabetic char into its charCode wrapped by "z";
+  Example: 'a.12#45' => 'a-12z35z45'
+*/
+var getAuthorClassName = function(authorId) {
+  var cleanedAuthorClass = (authorId || '').replace(/[^a-y0-9]/g, function(c) {
+    return c === '.' ? '-': 'z' + c.charCodeAt(0) + 'z';
   });
-}
-var getAuthorClassName = exports.getAuthorClassName;
-
-exports.className2Author = function(className) {
-  if (className.substring(0, 15) == "ep_cursortrace-") {
-    return className.substring(15).replace(/[a-y0-9]+|-|z.+?z/g, function(cc) {
-      if (cc == '-') {
-        return '.';
-      } else if (cc.charAt(0) == 'z') {
-        return String.fromCharCode(Number(cc.slice(1, -1)));
-      } else {
-        return cc;
-      }
-    });
-  }
-  return null;
+  return 'ep_cursortrace-' + cleanedAuthorClass;
 }
 
 exports.buildAndShowIndicators = function(caretLocations) {
@@ -66,7 +57,7 @@ var getAuthorColor = function(author) {
 
 // If the name isn't set then display a smiley face
 var getAuthorName = function(user) {
-  return user.name ? decodeURI(escape(user.name)) : SMILEY;
+  return user.name ? Security.escapeHTMLAttribute(user.name) : SMILEY;
 }
 
 var buildIndicator = function(user, position) {

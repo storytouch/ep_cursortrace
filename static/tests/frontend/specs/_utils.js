@@ -12,7 +12,6 @@ ep_cursortrace_test_helper.utils = {
     helper.newPad(function() {
       createScript(function() {
         var utils = ep_cursortrace_test_helper.utils;
-
         utils.speedUpCaretUpdate();
 
         // force setting to not hide caret indicators after some time, so tests
@@ -65,19 +64,17 @@ ep_cursortrace_test_helper.utils = {
   },
 
   getDistanceBetweenCaretIndicatorAndBeginningOfLine: function(lineNumber) {
-    var utils = ep_cursortrace_test_helper.utils;
-    var $beginningOfLine = utils.getLine(lineNumber).find('span:not(:empty)').first();
-    return utils.getDistanceBetweenCaretIndicatorAndTarget($beginningOfLine, false);
+    var $beginningOfLine = this.getLine(lineNumber).find('span:not(:empty)').first();
+    return this.getDistanceBetweenCaretIndicatorAndTarget($beginningOfLine, false);
   },
 
   getDistanceBetweenCaretIndicatorAndEndOfLine: function(lineNumber) {
-    var utils = ep_cursortrace_test_helper.utils;
-    var $endOfLine = utils.getLine(lineNumber).find('span').last();
-    return utils.getDistanceBetweenCaretIndicatorAndTarget($endOfLine, true);
+    var $endOfLine = this.getLine(lineNumber).find('span').last();
+    return this.getDistanceBetweenCaretIndicatorAndTarget($endOfLine, true);
   },
 
   getCaretIndicatorPosition: function() {
-    return ep_cursortrace_test_helper.utils.getCaretIndicator().position();
+    return this.getCaretIndicator().position();
   },
 
   waitForCaretIndicatorToMove: function(originalPosition, done, timeout) {
@@ -118,17 +115,16 @@ ep_cursortrace_test_helper.utils = {
   },
 
   placeCaretOfOtherUserAtBeginningOfLine: function(lineNumber, done) {
-    ep_cursortrace_test_helper.utils._placeCaretOfOtherUserAtLine(lineNumber, false, done);
+    this._placeCaretOfOtherUserAtLine(lineNumber, false, done);
   },
   placeCaretOfOtherUserAtEndOfLine: function(lineNumber, done) {
-    ep_cursortrace_test_helper.utils._placeCaretOfOtherUserAtLine(lineNumber, true, done);
+    this._placeCaretOfOtherUserAtLine(lineNumber, true, done);
   },
   _placeCaretOfOtherUserAtLine: function(lineNumber, atEndOfLine, done) {
-    var utils = ep_cursortrace_test_helper.utils;
     var multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
 
     multipleUsers.startActingLikeOtherUser();
-    var $line = utils.getLine(lineNumber);
+    var $line = this.getLine(lineNumber);
     var command = atEndOfLine ? '{selectall}{rightarrow}' : '{selectall}{leftarrow}';
     $line.sendkeys(command);
 

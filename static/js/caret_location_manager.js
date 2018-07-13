@@ -39,7 +39,6 @@ exports.updateCaretLocation = function(authorId, line, column) {
 exports.updatePendingCaretLocation = function(authorId, line, column) {
   var caretLocation = buildCaretLocationData(authorId, line, column);
   pendingCaretLocations[authorId] = caretLocation;
-  return caretLocation;
 }
 
 exports.removeCaretLocationOf = function(authorId) {
