@@ -1,28 +1,28 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 
-// Easier access to outer pad
-var padOuter;
-exports.getPadOuter = function() {
-  padOuter = padOuter || $('iframe[name="ace_outer"]').contents();
-  return padOuter;
+var utils = {
+  getPadOuter: function() {
+    this.padOuter = this.padOuter || $('iframe[name="ace_outer"]').contents();
+    return this.padOuter;
+  },
+
+  getPadInner: function() {
+    this.padInner = this.padInner || this.getPadOuter().find('iframe[name="ace_inner"]').contents();
+    return this.padInner;
+  },
+
+  getOuterDoc: function() {
+    this.$outerDocBody = this.$outerDocBody || this.getPadOuter().find("#outerdocbody");
+    return this.$outerDocBody;
+  },
+
+  getLineOnEditor: function(lineNumber) {
+    // +1 as Etherpad line numbers start at 0
+    var nthChild = lineNumber + 1;
+    return this.getPadInner().find('#innerdocbody > div:nth-child(' + nthChild + ')');
+  },
 }
 
-// Easier access to inner pad
-var padInner;
-exports.getPadInner = function() {
-  padInner = padInner || exports.getPadOuter().find('iframe[name="ace_inner"]').contents();
-  return padInner;
-}
-
-// Easier access to outer doc body
-var $outerDocBody;
-exports.getOuterDoc = function() {
-  $outerDocBody = $outerDocBody || exports.getPadOuter().find("#outerdocbody");
-  return $outerDocBody;
-}
-
-exports.getLineOnEditor = function(lineNumber) {
-  // +1 as Etherpad line numbers start at 0
-  var nthChild = lineNumber + 1;
-  return exports.getPadInner().find('#innerdocbody > div:nth-child(' + nthChild + ')');
+exports.initialize = function() {
+  return utils;
 }

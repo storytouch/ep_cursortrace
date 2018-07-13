@@ -13,6 +13,7 @@ exports.postAceInit = function(hook_name, args, cb) {
   pad.plugins = pad.plugins || {};
   pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
   pad.plugins.ep_cursortrace.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
+  pad.plugins.ep_cursortrace.utils = utils.initialize();
 
   hideCaretsOnDisabledEditor.initialize();
   caretIndicator.initialize();
@@ -32,11 +33,12 @@ var buildAndShowIndicatorsAfterLine = function(lineNumber) {
 }
 
 var updateCaretsWhenAnUpdateMightHadAffectedTheirPositions = function() {
-  utils.getPadInner().on(LINE_CHANGED_EVENT, function(e, data) {
+  var thisPlugin = pad.plugins.ep_cursortrace;
+  thisPlugin.utils.getPadInner().on(LINE_CHANGED_EVENT, function(e, data) {
     var lineOfChange = data.lineNumber;
     setTimeout(function() {
       buildAndShowIndicatorsAfterLine(lineOfChange);
-    }, pad.plugins.ep_cursortrace.timeToUpdateCaretPosition);
+    }, thisPlugin.timeToUpdateCaretPosition);
   });
 }
 

@@ -1,5 +1,4 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
-var utils = require('./utils');
 
 /*
   Get position where caret should be placed -- on **pad outer**.
@@ -17,6 +16,8 @@ var utils = require('./utils');
     5. Remove the clone, as it is not needed anymore.
 */
 exports.getCaretPosition = function(caretLine, caretColumn) {
+  var utils = pad.plugins.ep_cursortrace.utils;
+
   // Are we ready to get caret position?
   var $caretDiv = utils.getLineOnEditor(caretLine);
   if ($caretDiv.length === 0) return;
@@ -101,6 +102,7 @@ var splitNodeOnCaretPosition = function(cloneTextNode, counter, caretColumn) {
 // Clone line with caret and copy its style
 var cloneLineWithStyle = function($caretDiv) {
   // Position of editor relative to client. Needed in final positioning
+  var utils = pad.plugins.ep_cursortrace.utils;
   var $padInnerFrame = utils.getPadOuter().find('iframe[name="ace_inner"]');
   var innerEditorPosition = $padInnerFrame[0].getBoundingClientRect();
 
