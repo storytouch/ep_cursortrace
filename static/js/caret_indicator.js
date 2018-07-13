@@ -1,7 +1,6 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var Security = require('ep_etherpad-lite/static/js/security');
 
-var api = require('./api');
 var hiddenLines = require('./hidden_lines');
 var caretPosition = require('./caret_position');
 
@@ -9,8 +8,7 @@ var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 
 exports.initialize = function() {
-  api.startListeningToInboundMessages();
-  api.setHandleGoToCaretOfUser(scrollEditorToShowCaretIndicatorOf);
+  pad.plugins.ep_cursortrace.api.setHandleGoToCaretOfUser(scrollEditorToShowCaretIndicatorOf);
 }
 
 var scrollEditorToShowCaretIndicatorOf = function(authorId) {

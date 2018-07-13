@@ -1,8 +1,8 @@
-var api = require('./api');
-
 var caretLocationManager = function() {
   this.currentCaretLocations = {};
   this.pendingCaretLocations = {};
+  this.myAuthorId = pad.getUserId();
+  this.api = pad.plugins.ep_cursortrace.api;
 }
 
 caretLocationManager.prototype.activatePendingCaretLocations = function() {
@@ -16,8 +16,7 @@ caretLocationManager.prototype.getCaretLocations = function() {
 }
 
 caretLocationManager.prototype.getMyCurrentCaretLocation = function() {
-  var myAuthorId = pad.getUserId();
-  return this.currentCaretLocations[myAuthorId];
+  return this.currentCaretLocations[this.myAuthorId];
 }
 
 caretLocationManager.prototype.getCaretLocationsAfterLine = function(lineNumber) {
@@ -70,12 +69,12 @@ caretLocationManager.prototype._sendNewUsersListOnApi = function() {
   var authorsOnThisPad = Object.keys(this.currentCaretLocations);
 
   // don't need to send myAuthorId on the api
-  var myAuthorId = pad.getUserId();
+  var myAuthorId = this.myAuthorId;
   var authorsWithoutMe = authorsOnThisPad.filter(function(authorId) {
     return authorId !== myAuthorId;
   });
 
-  api.triggerListOfUsersOnThisPad(authorsWithoutMe);
+  this.api.triggerListOfUsersOnThisPad(authorsWithoutMe);
 }
 
 exports.initialize = function() {

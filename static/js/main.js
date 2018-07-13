@@ -1,4 +1,5 @@
 var LINE_CHANGED_EVENT = require('ep_comments_page/static/js/utils').LINE_CHANGED_EVENT;
+var api = require('./api');
 var utils = require('./utils');
 var caretIndicator = require('./caret_indicator');
 var caretLocationManager = require('./caret_location_manager');
@@ -9,11 +10,7 @@ var initiated = false;
 
 exports.postAceInit = function(hook_name, args, cb) {
   initiated = true;
-
-  var thisPlugin = _getThisPlugin();
-  thisPlugin.timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
-  thisPlugin.utils = utils.initialize();
-
+  _getThisPlugin().timeToUpdateCaretPosition = TIME_TO_UPDATE_CARETS_POSITION;
   hideCaretsOnDisabledEditor.initialize();
   caretIndicator.initialize();
   showCaretOfAuthorsAlreadyOnPad();
@@ -127,13 +124,22 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
 }
 
 var _getCaretLocationManager = function() {
-  var thisPlugin = _getThisPlugin();
-  thisPlugin.caretLocationManager = thisPlugin.caretLocationManager || caretLocationManager.initialize();
-  return thisPlugin.caretLocationManager;
+  return _getThisPlugin().caretLocationManager;
 }
 
 var _getThisPlugin = function() {
-  pad.plugins = pad.plugins || {};
-  pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
+  if (!pad.plugins || !pad.plugins.ep_cursortrace) {
+    // plugin modules not initialized yet
+    pad.plugins = pad.plugins || {};
+    pad.plugins.ep_cursortrace = pad.plugins.ep_cursortrace || {};
+    initializePlugin(pad.plugins.ep_cursortrace);
+  }
+
   return pad.plugins.ep_cursortrace;
+}
+
+var initializePlugin = function(thisPlugin) {
+  thisPlugin.utils = utils.initialize();
+  thisPlugin.api = api.initialize();
+  thisPlugin.caretLocationManager = caretLocationManager.initialize();
 }
