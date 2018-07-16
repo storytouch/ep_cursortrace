@@ -1,4 +1,4 @@
-var caretIndicator = require('./caret_indicator');
+var doNothing = function() {}
 
 exports.initialize = function() {
   return new api();
@@ -6,9 +6,13 @@ exports.initialize = function() {
 
 var api = function() {
   // messages sent to outside
-  this.LIST_OF_USERS_ON_PAD = 'LIST_OF_USERS_ON_PAD';
+  this.LIST_OF_USERS_ON_PAD = 'caret-users_on_pad';
   // messages coming from outside
-  this.GO_TO_CARET_OF_USER = 'GO_TO_CARET_OF_USER';
+  this.GO_TO_CARET_OF_USER = 'caret-go_to_caret_of_user';
+  this.SET_USERS_COLORS = 'caret-set_users_colors';
+
+  this.onGoToCaretOfUser = doNothing;
+  this.onSetUsersColors = doNothing;
 
   this.startListeningToInboundMessages();
 }
@@ -16,15 +20,32 @@ var api = function() {
 api.prototype.startListeningToInboundMessages = function() {
   var self = this;
   window.addEventListener('message', function(e) {
-    if (e.data.type === self.GO_TO_CARET_OF_USER) {
-      caretIndicator.scrollEditorToShowCaretIndicatorOf(e.data.userId);
-    }
+    self._handleInboundCalls(e);
   });
+}
+
+api.prototype._handleInboundCalls = function _handleInboundCalls(e) {
+  switch (e.data.type) {
+    case this.GO_TO_CARET_OF_USER:
+      this.onGoToCaretOfUser(e.data.userId);
+      break;
+    case this.SET_USERS_COLORS:
+      this.onSetUsersColors(e.data.usersColors);
+      break;
+  }
+}
+
+api.prototype.setHandleOnGoToCaretOfUser = function(fn) {
+  this.onGoToCaretOfUser = fn;
+}
+
+api.prototype.onUsersColorsChange = function(fn) {
+  this.onSetUsersColors = fn;
 }
 
 /*
   message: {
-    type: 'LIST_OF_USERS_ON_PAD',
+    type: 'caret-users_on_pad',
     userIds: ['a.psvBbHQGlbpH3OJX', 'a.xAvBb4KHlbpH3OJX']
   }
 */

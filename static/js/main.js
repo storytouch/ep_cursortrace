@@ -17,14 +17,20 @@ exports.postAceInit = function(hook_name, args, cb) {
 };
 
 var showCaretOfAuthorsAlreadyOnPad = function() {
-  var caretLocationManager = _getCaretLocationManager();
+  var thisPlugin = _getThisPlugin();
+  var caretLocationManager = thisPlugin.caretLocationManager;
+  var caretIndicator = thisPlugin.caretIndicator;
+
   caretLocationManager.activatePendingCaretLocations();
   var caretLocations = caretLocationManager.getCaretLocations();
   caretIndicator.buildAndShowIndicators(caretLocations);
 }
 
 var buildAndShowIndicatorsAfterLine = function(lineNumber) {
-  var caretLocationManager = _getCaretLocationManager();
+  var thisPlugin = _getThisPlugin();
+  var caretLocationManager = thisPlugin.caretLocationManager;
+  var caretIndicator = thisPlugin.caretIndicator;
+
   var caretLocations = caretLocationManager.getCaretLocationsAfterLine(lineNumber);
   caretIndicator.buildAndShowIndicators(caretLocations);
 }
@@ -92,11 +98,14 @@ exports.handleClientMessage_USER_NEWINFO = function(hook, context, cb) {
 }
 
 exports.handleClientMessage_USER_LEAVE = function(hook, context, cb) {
+  var thisPlugin = _getThisPlugin();
+  var caretLocationManager = thisPlugin.caretLocationManager;
+  var caretIndicator = thisPlugin.caretIndicator;
+
   var userId = context.payload.userId;
   // remove caret indicator on editor
   caretIndicator.removeCaretOf(userId);
   // update set of caretLocations
-  var caretLocationManager = _getCaretLocationManager();
   caretLocationManager.removeCaretLocationOf(userId);
 }
 
@@ -112,7 +121,9 @@ exports.handleClientMessage_CUSTOM = function(hook, context, cb) {
   if (pad.getUserId() === authorId) return false;
 
   // an author has sent this client a cursor position, we need to show it in the dom
-  var caretLocationManager = _getCaretLocationManager();
+  var thisPlugin = _getThisPlugin();
+  var caretLocationManager = thisPlugin.caretLocationManager;
+  var caretIndicator = thisPlugin.caretIndicator;
   if (!initiated) {
     // we are not ready yet to show caret indicator, so store it for when we are
     caretLocationManager.updatePendingCaretLocation(authorId, line, column);
@@ -141,4 +152,5 @@ var initializePlugin = function(thisPlugin) {
   thisPlugin.utils = utils.initialize();
   thisPlugin.api = api.initialize();
   thisPlugin.caretLocationManager = caretLocationManager.initialize();
+  thisPlugin.caretIndicator = caretIndicator.initialize();
 }
