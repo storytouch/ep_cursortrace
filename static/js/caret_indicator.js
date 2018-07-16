@@ -1,20 +1,13 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var Security = require('ep_etherpad-lite/static/js/security');
 
-var api = require('./api');
-var utils = require('./utils');
 var hiddenLines = require('./hidden_lines');
 var caretPosition = require('./caret_position');
 
 var SMILEY = "&#9785;"
 var INDICATOR_HEIGHT = 16;
 
-exports.initialize = function() {
-  api.startListeningToInboundMessages();
-  api.setHandleGoToCaretOfUser(scrollEditorToShowCaretIndicatorOf);
-}
-
-var scrollEditorToShowCaretIndicatorOf = function(authorId) {
+exports.scrollEditorToShowCaretIndicatorOf = function(authorId) {
   var $caretIndicator = getCaretIndicatorOf(authorId);
   $caretIndicator.get(0).scrollIntoView({ behavior: 'smooth' });
 }
@@ -82,7 +75,7 @@ var showIndicator = function($indicator, authorId) {
   var authorClassName = getAuthorClassName(authorId);
   $indicator.addClass(authorClassName);
 
-  var $outerdoc = utils.getOuterDoc();
+  var $outerdoc = getOuterDoc();
   // Remove all divs that already exist for this author
   $outerdoc.find("." + authorClassName).remove();
 
@@ -107,7 +100,7 @@ var removeCaretOf = exports.removeCaretOf;
 
 var getCaretIndicatorOf = function(authorId) {
   var authorClassName = getAuthorClassName(authorId);
-  return utils.getOuterDoc().find('.' + authorClassName);
+  return getOuterDoc().find('.' + authorClassName);
 }
 
 /*
@@ -121,4 +114,8 @@ var getAuthorClassName = function(authorId) {
     return c === '.' ? '-': 'z' + c.charCodeAt(0) + 'z';
   });
   return 'caret-' + cleanedAuthorClass;
+}
+
+var getOuterDoc = function() {
+  return pad.plugins.ep_cursortrace.utils.getOuterDoc();
 }

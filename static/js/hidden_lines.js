@@ -1,9 +1,9 @@
 // This code was initially adapted from ep_comments/static/js/textMarkIconsPosition.js,
 // but had been modified a lot since its creation.
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
-var utils = require('./utils');
 
 exports.getVisiblePosition = function(line, column) {
+  var utils = pad.plugins.ep_cursortrace.utils;
   var caretPosition = buildCaretPositionData(line, column);
 
   var $baseLine = utils.getLineOnEditor(line);
@@ -99,6 +99,7 @@ var lineIsBeforeFirstScene = function($line) {
 }
 
 var getLineNumberOfFirstScene = function() {
+  var utils = pad.plugins.ep_cursortrace.utils;
   var $beginningOfFirstScene = utils.getPadInner().find('div.sceneMark').first();
   return $beginningOfFirstScene.index();
 }

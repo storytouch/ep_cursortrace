@@ -1,24 +1,25 @@
-// messages sent to outside
-var LIST_OF_USERS_ON_PAD = 'LIST_OF_USERS_ON_PAD';
+var caretIndicator = require('./caret_indicator');
 
-// messages coming from outside
-var GO_TO_CARET_OF_USER = 'GO_TO_CARET_OF_USER';
+exports.initialize = function() {
+  return new api();
+}
 
-exports.startListeningToInboundMessages = function() {
+var api = function() {
+  // messages sent to outside
+  this.LIST_OF_USERS_ON_PAD = 'LIST_OF_USERS_ON_PAD';
+  // messages coming from outside
+  this.GO_TO_CARET_OF_USER = 'GO_TO_CARET_OF_USER';
+
+  this.startListeningToInboundMessages();
+}
+
+api.prototype.startListeningToInboundMessages = function() {
+  var self = this;
   window.addEventListener('message', function(e) {
-    _handleInboundCalls(e);
+    if (e.data.type === self.GO_TO_CARET_OF_USER) {
+      caretIndicator.scrollEditorToShowCaretIndicatorOf(e.data.userId);
+    }
   });
-}
-
-var _handleInboundCalls = function _handleInboundCalls(e) {
-  if (e.data.type === GO_TO_CARET_OF_USER) {
-    onGoToCaretOfUser(e.data.userId);
-  }
-}
-
-var onGoToCaretOfUser = function() {};
-exports.setHandleGoToCaretOfUser = function(fn) {
-  onGoToCaretOfUser = fn;
 }
 
 /*
@@ -27,17 +28,17 @@ exports.setHandleGoToCaretOfUser = function(fn) {
     userIds: ['a.psvBbHQGlbpH3OJX', 'a.xAvBb4KHlbpH3OJX']
   }
 */
-exports.triggerListOfUsersOnThisPad = function(userIds) {
+api.prototype.triggerListOfUsersOnThisPad = function(userIds) {
   var message = {
-    type: LIST_OF_USERS_ON_PAD,
+    type: this.LIST_OF_USERS_ON_PAD,
     userIds: userIds,
   };
-  _triggerEvent(message);
+  this._triggerEvent(message);
 }
 
-var _triggerEvent = function _triggerEvent(message) {
+api.prototype._triggerEvent = function _triggerEvent(message) {
   // send some extra info when running tests
-  if (_sendTestData()) {
+  if (this._sendTestData()) {
     message.fromUser = pad.getUserId();
   }
 
@@ -46,6 +47,6 @@ var _triggerEvent = function _triggerEvent(message) {
   target.postMessage(message, '*');
 }
 
-var _sendTestData = function() {
-  return pad && pad.plugins && pad.plugins.ep_cursortrace && pad.plugins.ep_cursortrace.sendTestDataOnApi;
+api.prototype._sendTestData = function() {
+  return pad.plugins.ep_cursortrace.sendTestDataOnApi;
 }
