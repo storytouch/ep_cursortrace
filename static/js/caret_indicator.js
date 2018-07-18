@@ -1,18 +1,50 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var Security = require('ep_etherpad-lite/static/js/security');
 
+var colors = require('./colors');
 var hiddenLines = require('./hidden_lines');
 var caretPosition = require('./caret_position');
 
-var SMILEY = "&#9785;"
+var SMILEY = '&#9785;'
+var CARET_INDICATOR_CLASS = 'caretindicator'
 var INDICATOR_HEIGHT = 16;
 
-exports.scrollEditorToShowCaretIndicatorOf = function(authorId) {
-  var $caretIndicator = getCaretIndicatorOf(authorId);
+exports.initialize = function() {
+  return new caretIndicator();
+}
+
+var caretIndicator = function() {
+  // map userId => colorName. Ex: { 'a.G1RIWyGaHlXbbYi9' : 'A8' }
+  this.usersColors = {};
+  this.myAuthorId = pad.getUserId();
+
+  var api = pad.plugins.ep_cursortrace.api;
+  api.setHandleOnGoToCaretOfUser(this.scrollEditorToShowCaretIndicatorOf.bind(this));
+  api.onUsersColorsChange(this.setUsersColors.bind(this));
+}
+
+caretIndicator.prototype.scrollEditorToShowCaretIndicatorOf = function(authorId) {
+  var $caretIndicator = this._getCaretIndicatorOf(authorId);
   $caretIndicator.get(0).scrollIntoView({ behavior: 'smooth' });
 }
 
-exports.buildAndShowIndicators = function(caretLocations) {
+caretIndicator.prototype.setUsersColors = function(usersColors) {
+  this.usersColors = usersColors;
+  this._updateColorsOfCurrentIndicators();
+}
+
+caretIndicator.prototype._updateColorsOfCurrentIndicators = function() {
+  var self = this;
+  var $caretIndicator = this._getOuterDoc().find('.' + CARET_INDICATOR_CLASS);
+
+  $caretIndicator.each(function() {
+    var $caretIndicator = $(this);
+    self._setColorOf($caretIndicator);
+  });
+}
+
+caretIndicator.prototype.buildAndShowIndicators = function(caretLocations) {
+  var self = this;
   var users = pad.collabClient.getConnectedUsers();
 
   for (var i = 0; i < caretLocations.length; i++) {
@@ -22,67 +54,74 @@ exports.buildAndShowIndicators = function(caretLocations) {
     var column   = caretLocation.column;
 
     // Don't show our own caret
-    if (pad.getUserId() === authorId) continue;
+    if (self.myAuthorId === authorId) continue;
 
     var visibleCaretPosition = hiddenLines.getVisiblePosition(line, column);
     var position = caretPosition.getCaretPosition(visibleCaretPosition.line, visibleCaretPosition.column);
     if (position) {
       $.each(users, function(index, user) {
         if (user.userId === authorId) {
-          var $indicator = buildIndicator(user, position);
-          showIndicator($indicator, authorId);
-          fadeOutCaretIndicator($indicator);
+          var $indicator = self._buildIndicator(user, position);
+          self._showIndicator($indicator, authorId);
+          self._fadeOutCaretIndicator($indicator);
         }
       });
     } else {
-      removeCaretOf(authorId);
+      self.removeCaretOf(authorId);
     }
   }
 }
 
-var getAuthorColor = function(author) {
-  var colors = pad.getColorPalette(); // support non set colors
-  var color = colors[author.colorId] || author.colorId; // Test for XSS
-  return color;
-}
-
 // If the name isn't set then display a smiley face
-var getAuthorName = function(user) {
+caretIndicator.prototype._getAuthorName = function(user) {
   return user.name ? Security.escapeHTMLAttribute(user.name) : SMILEY;
 }
 
-var buildIndicator = function(user, position) {
+caretIndicator.prototype._buildIndicator = function(user, position) {
   // Location of stick direction IE up or down
   var location = position.top >= INDICATOR_HEIGHT ? 'stickUp' : 'stickDown';
-  var color = getAuthorColor(user);
-  var authorName = getAuthorName(user);
-  var classes = "class='caretindicator " + location + "'";
-  var timestamp = Date.now();
+  var authorName = this._getAuthorName(user);
+  var classes = 'class="' + CARET_INDICATOR_CLASS + ' ' + location + '"';
+  var timestamp = 'timestamp="' + Date.now() + '"';
 
   // Create a new Div for this author
-  var $indicator = $("<div " + classes + " timestamp="+timestamp+"><p>"+authorName+"</p></div>");
+  var $indicator = $('<div ' + classes + ' ' + timestamp + '><p>' + authorName + '</p></div>');
+  $indicator.data('user_id', user.userId);
   $indicator.css({
-    height:  INDICATOR_HEIGHT + "px",
-    left: position.left + "px",
-    top: position.top + "px",
-    "background-color": color,
+    height:  INDICATOR_HEIGHT + 'px',
+    left: position.left + 'px',
+    top: position.top + 'px',
   });
+  this._setColorOf($indicator);
 
   return $indicator;
 }
 
-var showIndicator = function($indicator, authorId) {
-  var authorClassName = getAuthorClassName(authorId);
+caretIndicator.prototype._setColorOf = function($indicator) {
+  var userId = $indicator.data('user_id');
+  var color = this._getAuthorColor(userId);
+  $indicator.css({
+    'background-color': color,
+    color: color,
+  });
+}
+
+caretIndicator.prototype._getAuthorColor = function(userId) {
+  return colors.getColorHash(this.usersColors[userId]);
+}
+
+caretIndicator.prototype._showIndicator = function($indicator, authorId) {
+  var authorClassName = this._getAuthorClassName(authorId);
   $indicator.addClass(authorClassName);
 
-  var $outerdoc = getOuterDoc();
+  var $outerdoc = this._getOuterDoc();
   // Remove all divs that already exist for this author
-  $outerdoc.find("." + authorClassName).remove();
+  $outerdoc.find('.' + authorClassName).remove();
 
   $outerdoc.append($indicator);
 }
 
-var fadeOutCaretIndicator = function($indicator) {
+caretIndicator.prototype._fadeOutCaretIndicator = function($indicator) {
   if (clientVars.ep_cursortrace.fade_out_timeout) {
     // After a while, fade it out :)
     setTimeout(function(){
@@ -93,14 +132,13 @@ var fadeOutCaretIndicator = function($indicator) {
   }
 }
 
-exports.removeCaretOf = function(authorId) {
-  getCaretIndicatorOf(authorId).remove();
+caretIndicator.prototype.removeCaretOf = function(authorId) {
+  this._getCaretIndicatorOf(authorId).remove();
 }
-var removeCaretOf = exports.removeCaretOf;
 
-var getCaretIndicatorOf = function(authorId) {
-  var authorClassName = getAuthorClassName(authorId);
-  return getOuterDoc().find('.' + authorClassName);
+caretIndicator.prototype._getCaretIndicatorOf = function(authorId) {
+  var authorClassName = this._getAuthorClassName(authorId);
+  return this._getOuterDoc().find('.' + authorClassName);
 }
 
 /*
@@ -109,13 +147,16 @@ var getCaretIndicatorOf = function(authorId) {
     - replaces any non-numeric and non-alphabetic char into its charCode wrapped by "z";
   Example: 'a.12#45' => 'a-12z35z45'
 */
-var getAuthorClassName = function(authorId) {
+caretIndicator.prototype._getAuthorClassName = function(authorId) {
   var cleanedAuthorClass = (authorId || '').replace(/[^a-y0-9]/g, function(c) {
     return c === '.' ? '-': 'z' + c.charCodeAt(0) + 'z';
   });
   return 'caret-' + cleanedAuthorClass;
 }
 
-var getOuterDoc = function() {
-  return pad.plugins.ep_cursortrace.utils.getOuterDoc();
+caretIndicator.prototype._getOuterDoc = function() {
+  if (!this.$outerdoc) {
+    this.$outerdoc = pad.plugins.ep_cursortrace.utils.getOuterDoc();
+  }
+  return this.$outerdoc;
 }

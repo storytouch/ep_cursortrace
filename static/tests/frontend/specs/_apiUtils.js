@@ -1,7 +1,7 @@
 var ep_cursortrace_test_helper = ep_cursortrace_test_helper || {};
 ep_cursortrace_test_helper.apiUtils = {
   /**** messages sent to outside ****/
-  LIST_OF_USERS_ON_PAD: 'LIST_OF_USERS_ON_PAD',
+  LIST_OF_USERS_ON_PAD: 'caret-users_on_pad',
 
   lastDataSent: {},
 
@@ -46,14 +46,26 @@ ep_cursortrace_test_helper.apiUtils = {
   },
 
   /**** messages coming from outside ****/
-  GO_TO_CARET_OF_USER: 'GO_TO_CARET_OF_USER',
+  GO_TO_CARET_OF_USER: 'caret-go_to_caret_of_user',
+  SET_USERS_COLORS: 'caret-set_users_colors',
 
   simulateCallToGoToCaretOfUser: function(userId) {
     var message = {
       type: this.GO_TO_CARET_OF_USER,
       userId: userId,
     };
+    this._simulateCallOfMessage(message);
+  },
 
+  simulateCallToSetUsersColors: function(usersColors) {
+    var message = {
+      type: this.SET_USERS_COLORS,
+      usersColors: usersColors,
+    };
+    this._simulateCallOfMessage(message);
+  },
+
+  _simulateCallOfMessage: function(message) {
     var inboundApiEventsTarget = helper.padChrome$.window;
     inboundApiEventsTarget.postMessage(message, '*');
   },

@@ -10,8 +10,9 @@
   display: block;
   width: 2px;
   height: 26px;
-  background-color: black;
   opacity: .5;
+  /* make stick & name have the same color */
+  background-color: currentColor;
 }
 
 .caretindicator p {
@@ -19,6 +20,7 @@
   margin-top:-24px;
   padding-left:4px;
   padding-right:4px;
+  color: black;
 }
 
 .caretindicator.stickDown {
