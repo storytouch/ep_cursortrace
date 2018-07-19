@@ -39,12 +39,33 @@ describe('ep_cursortrace - api - inbound messages', function() {
         apiUtils.simulateCallToGoToCaretOfUser(utils.otherUserId);
       });
 
-      it('scrolls editor until the caret of target user is visible', function(done) {
+      it('scrolls editor until the caret indicator of target user is visible', function(done) {
         var isVisibleOnViewport = ep_comments_page_test_helper.utils.isVisibleOnViewport;
         var $caretIndicator = utils.getCaretIndicator();
 
         helper.waitFor(function() {
           return isVisibleOnViewport($caretIndicator.get(0));
+        }).done(done);
+      });
+    });
+
+    context('when user requires to go to caret of my user', function() {
+      before(function() {
+        // move my caret to the beginning of pad...
+        var $lineToPlaceMyCaret = utils.getLine(0);
+        $lineToPlaceMyCaret.sendkeys('{selectall}{rightarrow}');
+
+        // ... then scroll viewport away from that line
+        var $editor = helper.padOuter$('#outerdocbody');
+        $editor.parent().scrollTop($editor.height() / 2);
+
+        apiUtils.simulateCallToGoToCaretOfUser(utils.myUserId);
+      });
+
+      it('scrolls editor until the caret of my user is visible', function(done) {
+        var $editor = helper.padOuter$('#outerdocbody');
+        helper.waitFor(function() {
+          return $editor.parent().scrollTop() === 0;
         }).done(done);
       });
     });

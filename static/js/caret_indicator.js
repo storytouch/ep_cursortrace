@@ -14,18 +14,36 @@ exports.initialize = function() {
 }
 
 var caretIndicator = function() {
+  this.myAuthorId = pad.getUserId();
+  this.thisPlugin = pad.plugins.ep_cursortrace;
   // map userId => colorName. Ex: { 'a.G1RIWyGaHlXbbYi9' : 'A8' }
   this.usersColors = {};
-  this.myAuthorId = pad.getUserId();
 
-  var api = pad.plugins.ep_cursortrace.api;
+  var api = this.thisPlugin.api;
   api.setHandleOnGoToCaretOfUser(this.scrollEditorToShowCaretIndicatorOf.bind(this));
   api.onUsersColorsChange(this.setUsersColors.bind(this));
 }
 
 caretIndicator.prototype.scrollEditorToShowCaretIndicatorOf = function(authorId) {
-  var $caretIndicator = this._getCaretIndicatorOf(authorId);
-  $caretIndicator.get(0).scrollIntoView({ behavior: 'smooth' });
+  // we don't render the caret indicator of ourselves, so we need to use the
+  // line on padInner as reference
+  var $target = (authorId === this.myAuthorId) ? this._getMyCurrentLine() : this._getCaretIndicatorOf(authorId);
+  $target.get(0).scrollIntoView({ behavior: 'smooth' });
+
+  // if user needs to click out of editor (padInner) to trigger the scroll to caret of target author,
+  // the editor will lose focus, so user cannot start typing right away.
+  // Force focus to be on editor to avoid that.
+  this._makeSureEditorHasTheFocus();
+}
+
+caretIndicator.prototype._makeSureEditorHasTheFocus = function() {
+  this.thisPlugin.utils.getPadOuter().find('iframe[name="ace_inner"]').get(0).contentWindow.focus();
+}
+
+caretIndicator.prototype._getMyCurrentLine = function() {
+  var myCurrentLocation = this.thisPlugin.caretLocationManager.getMyCurrentCaretLocation();
+  var $myCurrentLine = this.thisPlugin.utils.getLineOnEditor(myCurrentLocation.line);
+  return $myCurrentLine;
 }
 
 caretIndicator.prototype.setUsersColors = function(usersColors) {
