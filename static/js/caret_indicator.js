@@ -29,6 +29,15 @@ caretIndicator.prototype.scrollEditorToShowCaretIndicatorOf = function(authorId)
   // line on padInner as reference
   var $target = (authorId === this.myAuthorId) ? this._getMyCurrentLine() : this._getCaretIndicatorOf(authorId);
   $target.get(0).scrollIntoView({ behavior: 'smooth' });
+
+  // if user needs to click out of editor (padInner) to trigger the scroll to caret of target author,
+  // the editor will lose focus, so user cannot start typing right away.
+  // Force focus to be on editor to avoid that.
+  this._makeSureEditorHasTheFocus();
+}
+
+caretIndicator.prototype._makeSureEditorHasTheFocus = function() {
+  this.thisPlugin.utils.getPadOuter().find('iframe[name="ace_inner"]').get(0).contentWindow.focus();
 }
 
 caretIndicator.prototype._getMyCurrentLine = function() {
