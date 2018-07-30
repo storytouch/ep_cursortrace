@@ -82,11 +82,11 @@ describe('ep_cursortrace - api - inbound messages', function() {
         apiUtils.simulateCallToSetUsersColors(usersColors);
       });
 
-      it('shows caret indicator with the provided color', function(done) {
+      it('shows author name with the provided color', function(done) {
         var getBackgroundColorOf = ep_script_touches_test_helper.utils.getBackgroundColorOf;
         helper.waitFor(function() {
-          var $caretIndicator = utils.getCaretIndicator();
-          return getBackgroundColorOf($caretIndicator) === COLOR_HASH;
+          var $authorName = utils.getCaretIndicator().find('.name');
+          return getBackgroundColorOf($authorName) === COLOR_HASH;
         }).done(done);
       });
     });
