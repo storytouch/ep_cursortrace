@@ -9,11 +9,13 @@ Important: A caret is not a cursor, a cursor is what your mouse uses.. A caret i
 
 ## Customization
 
-By default, the caret indicator is rendered for 2 seconds, then it fades out. If you want to change this behavior, you can configure your `settings.json`:
+By default, the caret indicator is rendered for 2 seconds, then it fades out. If you want to change this behavior, you can configure your `settings.json`. You can also keep caret indicator always visible, and fade out only the author name:
 
 ```
   "ep_cursortrace":{
-    "fade_out_timeout": 2000 // in milliseconds. A 0 timeout means caret indicators are never hidden
+    // timeouts in milliseconds. A 0 timeout means caret indicators and/or author names are never hidden
+    "fade_out_timeout": 2000,
+    "fade_out_name_timeout": 2000
   }
 ```
 

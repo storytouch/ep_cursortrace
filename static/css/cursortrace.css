@@ -1,36 +1,59 @@
 .caretindicator {
-  max-width:300px;
-  margin: -14px 0;
-  position:absolute;
-  opacity:1;
+  max-width: 300px;
+  margin: 0 -2px; /* -2px: inverse of horizontal margins of .caretindicator:before */
+  height: 16px;
+  position: absolute;
+  opacity: .5;
 }
 
+/* caret "bar" */
 .caretindicator:before {
   content: "";
   display: block;
   width: 2px;
-  height: 26px;
-  opacity: .5;
+  height: 100%;
+  margin: 0 2px;
   /* make stick & name have the same color */
   background-color: currentColor;
 }
 
-.caretindicator p {
-  position:relative;
-  margin-top:-24px;
-  padding-left:4px;
-  padding-right:4px;
+/* caret name */
+.caretindicator .name {
+  /* place name on top of caret bar */
+  position: relative;
+  margin-top: -32px;
+  padding: 3px;
+  /* make stick & name have the same color */
+  background-color: currentColor;
+}
+
+.caretindicator .name p {
   color: black;
 }
 
-.caretindicator.stickDown {
-  margin-top: 14px;
+/* styles for caret indicator with no visible author */
+.caretindicator .name {
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+
+  /* animate showing/hiding author name */
+  will-change: max-height, max-width;
+  -webkit-transition: all 500ms ease-in-out;
+  -moz-transition: all 500ms ease-in-out;
+  -ms-transition: all 500ms ease-in-out;
+  -o-transition: all 500ms ease-in-out;
+  transition: all 500ms ease-in-out;
 }
-.caretindicator.stickDown:before {
-  margin-top: -10px;
+.caretindicator.no-name .name {
+  max-width: 0;
+  max-height: 0;
+  margin-top: -22px;
 }
-.caretindicator.stickDown p {
-  margin-top: -14px;
+
+/* styles for caret indicator with author name below target position */
+.caretindicator.stickDown .name {
+  margin-top: 0;
 }
 
 /* hide caret indicator when pad is disabled */

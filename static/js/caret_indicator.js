@@ -99,14 +99,14 @@ caretIndicator.prototype._buildIndicator = function(user, position) {
   // Location of stick direction IE up or down
   var location = position.top >= INDICATOR_HEIGHT ? 'stickUp' : 'stickDown';
   var authorName = this._getAuthorName(user);
+  var author = '<div class="name"><p>' + authorName + '</p></div>'
   var classes = 'class="' + CARET_INDICATOR_CLASS + ' ' + location + '"';
   var timestamp = 'timestamp="' + Date.now() + '"';
 
   // Create a new Div for this author
-  var $indicator = $('<div ' + classes + ' ' + timestamp + '><p>' + authorName + '</p></div>');
+  var $indicator = $('<div ' + classes + ' ' + timestamp + '>' + author + '</div>');
   $indicator.data('user_id', user.userId);
   $indicator.css({
-    height:  INDICATOR_HEIGHT + 'px',
     left: position.left + 'px',
     top: position.top + 'px',
   });
@@ -119,7 +119,6 @@ caretIndicator.prototype._setColorOf = function($indicator) {
   var userId = $indicator.data('user_id');
   var color = this._getAuthorColor(userId);
   $indicator.css({
-    'background-color': color,
     color: color,
   });
 }
@@ -140,13 +139,23 @@ caretIndicator.prototype._showIndicator = function($indicator, authorId) {
 }
 
 caretIndicator.prototype._fadeOutCaretIndicator = function($indicator) {
-  if (clientVars.ep_cursortrace.fade_out_timeout) {
-    // After a while, fade it out :)
+  var settings = clientVars.ep_cursortrace;
+
+  if (settings.fade_out_timeout) {
     setTimeout(function(){
       $indicator.fadeOut(500, function(){
         $indicator.remove();
       });
-    }, clientVars.ep_cursortrace.fade_out_timeout);
+    }, settings.fade_out_timeout);
+  } else if (settings.fade_out_name_timeout) {
+    // we use CSS animations to show/hide author name
+    var hideAuthorName = function() { $indicator.addClass('no-name') };
+    var showAuthorName = function() { $indicator.removeClass('no-name') };
+
+    // fade name after a while...
+    setTimeout(hideAuthorName, settings.fade_out_name_timeout);
+    // ... and show it again while mouse is over
+    $indicator.on('mouseenter', showAuthorName).on('mouseleave', hideAuthorName);
   }
 }
 
