@@ -3,7 +3,6 @@
   margin: 0 -2px; /* -2px: inverse of horizontal margins of .caretindicator:before */
   height: 16px;
   position: absolute;
-  opacity: .5;
 }
 
 /* caret "bar" */
@@ -11,18 +10,20 @@
   content: "";
   display: block;
   width: 2px;
-  height: 100%;
-  margin: 0 2px;
+  height: 15px;
+  margin: 0 1px;
   /* make stick & name have the same color */
   background-color: currentColor;
 }
 
 /* caret name */
 .caretindicator .name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
   /* place name on top of caret bar */
   position: relative;
-  margin-top: -32px;
-  padding: 3px;
+  margin-top: -30px;
+  padding: 1px 3px;
   /* make stick & name have the same color */
   background-color: currentColor;
 }
@@ -48,7 +49,8 @@
 .caretindicator.no-name .name {
   max-width: 0;
   max-height: 0;
-  margin-top: -22px;
+  margin-top: -18px;
+  padding: 2px;
 }
 
 /* styles for caret indicator with author name below target position */
