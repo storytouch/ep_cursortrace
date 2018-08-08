@@ -67,14 +67,7 @@ caretLocationManager.prototype._buildCaretLocationData = function(authorId, line
 
 caretLocationManager.prototype._sendNewUsersListOnApi = function() {
   var authorsOnThisPad = Object.keys(this.currentCaretLocations);
-
-  // don't need to send myAuthorId on the api
-  var myAuthorId = this.myAuthorId;
-  var authorsWithoutMe = authorsOnThisPad.filter(function(authorId) {
-    return authorId !== myAuthorId;
-  });
-
-  this.api.triggerListOfUsersOnThisPad(authorsWithoutMe);
+  this.api.triggerListOfUsersOnThisPad(authorsOnThisPad);
 }
 
 exports.initialize = function() {

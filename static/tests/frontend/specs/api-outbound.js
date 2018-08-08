@@ -13,23 +13,25 @@ describe('ep_cursortrace - api - outbound messages', function() {
     utils.openPadForMultipleUsers(this, createEmptyScript, done);
   });
 
-  it('sends this user on the list of users on pad for the other user', function(done) {
+  it('sends both users on the list of users on pad for the other user', function(done) {
     var usersOfOtherPad = apiUtils.getLastListOfUsersOnPadOf(utils.otherUserId);
-    expect(usersOfOtherPad.length).to.be(1);
-    expect(usersOfOtherPad[0]).to.be(utils.myUserId);
+    expect(usersOfOtherPad.length).to.be(2);
+    expect(usersOfOtherPad).to.contain(utils.myUserId);
+    expect(usersOfOtherPad).to.contain(utils.otherUserId);
     done();
   });
 
-  it('sends the other user on the list of users on pad for this user', function(done) {
+  it('sends both users on the list of users on pad for this user', function(done) {
     // The initial list is sent with no other users, we need to wait for the list
     // to be updated with the other user id
     helper.waitFor(function() {
       var usersOfMyPad = apiUtils.getLastListOfUsersOnPadOf(utils.myUserId);
-      return usersOfMyPad.length > 0;
+      return usersOfMyPad.length > 1;
     }).done(function() {
       var usersOfMyPad = apiUtils.getLastListOfUsersOnPadOf(utils.myUserId);
-      expect(usersOfMyPad.length).to.be(1);
-      expect(usersOfMyPad[0]).to.be(utils.otherUserId);
+      expect(usersOfMyPad.length).to.be(2);
+      expect(usersOfMyPad).to.contain(utils.myUserId);
+      expect(usersOfMyPad).to.contain(utils.otherUserId);
       done();
     });
   });
@@ -39,10 +41,15 @@ describe('ep_cursortrace - api - outbound messages', function() {
       multipleUsers.closePadForOtherUser();
     });
 
-    it('sends an empty list of users on pad for this user', function(done) {
-      var usersOfMyPad = apiUtils.getLastListOfUsersOnPadOf(utils.myUserId);
-      expect(usersOfMyPad).to.be.empty;
-      done();
+    it('sends only one users on pad for this user', function(done) {
+      helper.waitFor(function() {
+        var usersOfMyPad = apiUtils.getLastListOfUsersOnPadOf(utils.myUserId);
+        return usersOfMyPad.length === 1;
+      }).done(function() {
+        var usersOfMyPad = apiUtils.getLastListOfUsersOnPadOf(utils.myUserId);
+        expect(usersOfMyPad).to.contain(utils.myUserId);
+        done();
+      });
     });
   });
 });
