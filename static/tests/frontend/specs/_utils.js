@@ -73,7 +73,11 @@ ep_cursortrace_test_helper.utils = {
     }
     var helperMarkPosition = $helperMark.position();
 
-    var top  = caretPosition.top  - helperMarkPosition.top;
+    // +15: in order to improve UX when clicking close to the indicator, we shift the
+    // whole indicator 15px up. So we need to adjust its position when comparing to
+    // an element on editor
+    var actualCaretTop = caretPosition.top + 15;
+    var top  = actualCaretTop  - helperMarkPosition.top;
     var left = caretPosition.left - helperMarkPosition.left;
 
     $helperMark.remove();
