@@ -7,7 +7,8 @@ var caretPosition = require('./caret_position');
 
 var SMILEY = '&#9785;'
 var CARET_INDICATOR_CLASS = 'caretindicator'
-var INDICATOR_HEIGHT = 16;
+// If you change value of INDICATOR_HEIGHT, you also need to change the values on CSS
+var INDICATOR_HEIGHT = 15;
 
 exports.initialize = function() {
   return new caretIndicator();
@@ -108,7 +109,7 @@ caretIndicator.prototype._buildIndicator = function(user, position) {
   $indicator.data('user_id', user.userId);
   $indicator.css({
     left: position.left + 'px',
-    top: position.top + 'px',
+    top: (position.top - INDICATOR_HEIGHT) + 'px',
   });
   this._setColorOf($indicator);
 
