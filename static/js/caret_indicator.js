@@ -59,7 +59,15 @@ caretIndicator.prototype._updateColorsOfCurrentIndicators = function() {
   $caretIndicator.each(function() {
     var $caretIndicator = $(this);
     self._setColorOf($caretIndicator);
+    self._setColorOfTextOfCaretIndicator($caretIndicator);
   });
+}
+
+caretIndicator.prototype._setColorOfTextOfCaretIndicator = function($indicator) {
+  var userColorName = this._getUserColorName($indicator);
+  if (userColorName.startsWith('C') || userColorName.startsWith('D')) {
+    $indicator.addClass('light-bg');
+  }
 }
 
 caretIndicator.prototype.buildAndShowIndicators = function(caretLocations) {
@@ -117,15 +125,20 @@ caretIndicator.prototype._buildIndicator = function(user, position) {
 }
 
 caretIndicator.prototype._setColorOf = function($indicator) {
-  var userId = $indicator.data('user_id');
-  var color = this._getAuthorColor(userId);
+  var color = this._getAuthorColor($indicator);
   $indicator.css({
     color: color,
   });
 }
 
-caretIndicator.prototype._getAuthorColor = function(userId) {
-  return colors.getColorHash(this.usersColors[userId]);
+caretIndicator.prototype._getUserColorName = function($indicator) {
+  var userId = $indicator.data('user_id');
+  return this.usersColors[userId];
+}
+
+caretIndicator.prototype._getAuthorColor = function($indicator) {
+  var userColorName = this._getUserColorName($indicator);
+  return colors.getColorHash(userColorName);
 }
 
 caretIndicator.prototype._showIndicator = function($indicator, authorId) {
