@@ -63,12 +63,9 @@ caretIndicator.prototype._updateColorsOfCurrentIndicators = function() {
   });
 }
 
-// we have a palette of 40 colors separated into 4 columns (10 x 4). For each
-// column we use a letter as prefix (A, B, C, D). The columns "B" and "D" are
-// the ones with colors with higher brightness
 caretIndicator.prototype._setColorOfTextOfCaretIndicator = function($indicator) {
   var userColorName = this._getUserColorName($indicator);
-  if (userColorName.startsWith('B') || userColorName.startsWith('D')) {
+  if (colors.isColorLight(userColorName)) {
     $indicator.addClass('light-bg');
   }
 }
