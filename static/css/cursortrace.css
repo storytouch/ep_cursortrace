@@ -32,6 +32,10 @@
 }
 
 .caretindicator .name p {
+  color: white;
+}
+
+.caretindicator.light-bg .name p {
   color: black;
 }
 

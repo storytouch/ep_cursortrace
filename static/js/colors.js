@@ -17,6 +17,13 @@ exports.getColorHash = function(colorName, alpha) {
   return 'rgba(' + rgb + ', ' + alpha + ')';
 }
 
+// we have a palette of 40 colors separated into 4 columns "COLOR_NAMES". For each
+// column we use a letter as prefix (A, B, C, D). The columns "A" and "C" are
+// the ones with colors with higher brightness
+exports.isColorLight = function(colorName) {
+  return colorName.startsWith('A') || colorName.startsWith('C');
+}
+
 var COLORS_RGB = {
   A1:  '255, 0  , 0',
   A2:  '255, 126, 0',
