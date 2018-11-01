@@ -59,7 +59,6 @@ caretIndicator.prototype._updateColorsOfCurrentIndicators = function() {
   $caretIndicator.each(function() {
     var $caretIndicator = $(this);
     self._setColorOf($caretIndicator);
-    self._setColorOfTextOfCaretIndicator($caretIndicator);
   });
 }
 
@@ -120,7 +119,6 @@ caretIndicator.prototype._buildIndicator = function(user, position) {
     top: (position.top - INDICATOR_HEIGHT) + 'px',
   });
   this._setColorOf($indicator);
-
   return $indicator;
 }
 
@@ -129,6 +127,7 @@ caretIndicator.prototype._setColorOf = function($indicator) {
   $indicator.css({
     color: color,
   });
+  this._setColorOfTextOfCaretIndicator($indicator);
 }
 
 caretIndicator.prototype._getUserColorName = function($indicator) {
