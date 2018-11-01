@@ -21,7 +21,7 @@ exports.getColorHash = function(colorName, alpha) {
 // column we use a letter as prefix (A, B, C, D). The columns "A" and "C" are
 // the ones with colors with higher brightness
 exports.isColorLight = function(colorName) {
-  return colorName.startsWith('A') || colorName.startsWith('C');
+  return colorName && (colorName.startsWith('A') || colorName.startsWith('C'));
 }
 
 var COLORS_RGB = {

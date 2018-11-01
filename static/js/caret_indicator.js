@@ -120,7 +120,7 @@ caretIndicator.prototype._buildIndicator = function(user, position) {
     top: (position.top - INDICATOR_HEIGHT) + 'px',
   });
   this._setColorOf($indicator);
-
+  this._setColorOfTextOfCaretIndicator($indicator);
   return $indicator;
 }
 
