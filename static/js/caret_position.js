@@ -1,4 +1,6 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var _ = require('ep_etherpad-lite/static/js/underscore');
+var pasteUtils = require('ep_script_copy_cut_paste/static/js/utils');
 
 /*
   Get position where caret should be placed -- on **pad outer**.
@@ -55,22 +57,20 @@ exports.getCaretPosition = function(caretLine, caretColumn) {
 }
 
 var getNodeInfoWhereCaretIs = function(caretColumn, $caretDiv) {
-  // $textNodes holds all text nodes that are found inside the div
-  var $textNodes = $caretDiv.find('*').contents().filter(function() {
-    return this.nodeType === Node.TEXT_NODE;
-  });
+  // textNodes holds all text nodes that are found inside the div
+  var textNodes = pasteUtils.getTextNodesOf($caretDiv.get(0));
 
   // Now we want to find the text node the caret is in
   var counter = 0; // Holds the added length of text of all text nodes parsed so far
   var childNode = null; // The node caret is in
 
-  $textNodes.each(function(index, element) {
+  _(textNodes).find(function(element) {
     counter = counter + element.nodeValue.length; // Add up to the length of text nodes parsed
     childNode = element;
 
-    // Found node where caret is
+    // Found node where caret is, don't need to look further
     if(counter >= caretColumn) {
-      return false; // Stop .each by returning false
+      return true; // Stop _.find
     }
   });
 
