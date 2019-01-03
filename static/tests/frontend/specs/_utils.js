@@ -43,7 +43,7 @@ ep_cursortrace_test_helper.utils = {
     // There's a unique trigger for lines changed event (on ep_comments), we need to set
     // the timeout there
     var ep_comments_page = helper.padChrome$.window.pad.plugins.ep_comments_page;
-    ep_comments_page.commentHandler.lineChangeEventTriggerer.padChangedListener.timeout = 0;
+    ep_comments_page.lineChangeEventTriggerer.padChangedListener.timeout = 0;
   },
 
   _storeUserIds: function(done) {
