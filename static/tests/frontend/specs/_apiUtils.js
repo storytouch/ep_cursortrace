@@ -31,7 +31,9 @@ ep_cursortrace_test_helper.apiUtils = {
     // This happens because we send the initial list of users right after pad is loaded, and
     // we only call apiUtils.startListeningToApiEvents() after that happens.
     if (!userId) {
-      var $lastOpenedPad = $('#iframe-container iframe').last();
+      var $lastOpenedPad = $('#iframe-container iframe').filter(function() {
+        return !!this.contentWindow.pad; // did pad load already?
+      }).last();
       userId = $lastOpenedPad.get(0).contentWindow.pad.getUserId();
     }
     return userId;
