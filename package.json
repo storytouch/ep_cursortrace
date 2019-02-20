@@ -3,12 +3,16 @@
   "description": "Show cursor/caret movements of other users in real time",
   "version": "2.0.15",
   "author": "RedHog (Egil Moeller) <egil.moller@freecode.no>",
-  "repository":"git@github.com:redhog/ep_cursortrace.git",
-  "contributors": [{
-    "name": "John McLear",
-    "email": "john@mclear.co.uk",
-    "url": "http://mclear.co.uk"
-  }],
+  "repository": "git@github.com:redhog/ep_cursortrace.git",
+  "contributors": [
+    {
+      "name": "John McLear",
+      "email": "john@mclear.co.uk",
+      "url": "http://mclear.co.uk"
+    }
+  ],
   "dependencies": {},
-  "engines": { "node": "*" }
+  "engines": {
+    "node": "*"
+  }
 }
