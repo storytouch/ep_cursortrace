@@ -51,8 +51,14 @@ exports.aceEditEvent = function(hook_name, args, cb) {
   if (isCaretMoving(args)) {
     var rep = args.rep;
     var line = rep.selStart[0];
+
     // line might be a line with line attributes, so we need to ignore the '*' on the text
     var column = rep.selStart[1] - rep.lines.atIndex(line).lineMarker;
+    // BUGFIX: for some weird reason, Etherpad places the caret on [0,0] even
+    // when the line has '*'. In this case, we need to adjust `column`, so we
+    // don't have a column with negative value
+    if (column === -1) column = 0;
+
     var caretLocationManager = _getCaretLocationManager();
     if (caretLocationManager.myPositionChanged(line, column)) {
       sendMessageWithCaretPosition(line, column);
