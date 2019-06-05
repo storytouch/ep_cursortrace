@@ -1,5 +1,5 @@
 describe('ep_cursortrace - integration with ep_script_scene_marks', function () {
-  var utils, smUtils, multipleUsers;
+  var utils, smUtils;
 
   var LINE_BEFORE_SM = 0;
   var LINE_WITH_HEADING = 4;
@@ -33,7 +33,6 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
   }
 
   before(function(done) {
-    multipleUsers = ep_script_copy_cut_paste_test_helper.multipleUsers;
     utils = ep_cursortrace_test_helper.utils;
     smUtils = ep_script_scene_marks_test_helper.utils;
 
