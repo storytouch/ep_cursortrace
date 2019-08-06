@@ -77,8 +77,8 @@ ep_cursortrace_test_helper.utils = {
     // whole indicator 15px up. So we need to adjust its position when comparing to
     // an element on editor
     var actualCaretTop = caretPosition.top + 15;
-    var top  = actualCaretTop  - helperMarkPosition.top;
-    var left = caretPosition.left - helperMarkPosition.left;
+    var top  = Math.round(actualCaretTop  - helperMarkPosition.top);
+    var left = Math.round(caretPosition.left - helperMarkPosition.left);
 
     $helperMark.remove();
 
