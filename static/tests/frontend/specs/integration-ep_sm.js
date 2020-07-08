@@ -110,10 +110,10 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
 
     it('updates the caret indicator for this user', function(done) {
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
-        var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_BEFORE_SM);
-        expect(distance.left).to.be(0);
-        expect(distance.top).to.be(0);
-        done();
+        helper.waitFor(function() {
+          var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_BEFORE_SM);
+          return distance.left === 0 && distance.top === 0;
+        }).done(done);
       });
     });
 
