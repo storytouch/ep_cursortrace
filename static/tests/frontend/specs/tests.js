@@ -49,7 +49,7 @@ describe('ep_cursortrace - Basic Tests', function () {
   context('when this user edits the line where caret of other user is', function() {
     var editLine = function(done) {
       var $firstLine = utils.getLine(TARGET_LINE);
-      $firstLine.sendkeys('{selectall}{leftarrow}').sendkeys('!!');
+      $firstLine.sendkeys('{selectall}{leftarrow}').sendkeys('!!!!'); // force text goes to next line
       done();
     }
 
