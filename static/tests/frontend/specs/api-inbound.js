@@ -65,7 +65,7 @@ describe('ep_cursortrace - api - inbound messages', function() {
       it('scrolls editor until the caret of my user is visible', function(done) {
         var $editor = helper.padOuter$('#outerdocbody');
         helper.waitFor(function() {
-          return $editor.parent().scrollTop() === 0;
+          return $editor.parent().scrollTop() === 77; // 77px is the padding
         }).done(done);
       });
     });
