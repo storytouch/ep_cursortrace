@@ -14,11 +14,15 @@ describe('ep_cursortrace - api - outbound messages', function() {
   });
 
   it('sends both users on the list of users on pad for the other user', function(done) {
-    var usersOfOtherPad = apiUtils.getLastListOfUsersOnPadOf(utils.otherUserId);
-    expect(usersOfOtherPad.length).to.be(2);
-    expect(usersOfOtherPad).to.contain(utils.myUserId);
-    expect(usersOfOtherPad).to.contain(utils.otherUserId);
-    done();
+    helper.waitFor(function() {
+      var usersOfOtherPad = apiUtils.getLastListOfUsersOnPadOf(utils.otherUserId);
+      return usersOfOtherPad.length === 2;
+    }).done(function() {
+      var usersOfOtherPad = apiUtils.getLastListOfUsersOnPadOf(utils.otherUserId);
+      expect(usersOfOtherPad).to.contain(utils.myUserId);
+      expect(usersOfOtherPad).to.contain(utils.otherUserId);
+      done();
+    });
   });
 
   it('sends both users on the list of users on pad for this user', function(done) {

@@ -119,42 +119,45 @@ describe('ep_cursortrace - integration with ep_script_toggle_view', function () 
         utils.placeCaretOfOtherUserAtBeginningOfLine(LINE_WITH_SEQ_DESCRIPTION_1, done);
       };
 
-      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToTheMiddleOfSequence, done);
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToTheMiddleOfSequence, done, 4000);
     }
 
     var testCaretIndicatorIsOnSamePositionOfCaret = function(testConfig) {
       it('shows caret indicator on the exact position when the other user placed it', function(done) {
+        this.timeout(6000)
         var moveCaret = moveCaretOfOtherUserToLine(testConfig.lineNumber);
         utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
           var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(testConfig.lineNumber);
           expect(distance.left).to.be(0);
           expect(distance.top).to.be(0);
           done();
-        }, 1900);
+        }, 4000);
       });
     }
 
     var testCaretIndicatorIsAtBeginningOfSequenceTitle = function(testConfig) {
       it('shows caret indicator at the beginning of sequence title', function(done) {
+        this.timeout(6000)
         var moveCaret = moveCaretOfOtherUserToLine(testConfig.lineNumber);
         utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
           var distance = utils.getDistanceBetweenCaretIndicatorAndBeginningOfLine(LINE_WITH_SEQ_TITLE);
           expect(distance.left).to.be(0);
           expect(distance.top).to.be(0);
           done();
-        }, 1900);
+        }, 4000);
       });
     }
 
     var testCaretIndicatorIsAtEndOfSequenceDescription = function(testConfig) {
       it('shows caret indicator at the end of last line of sequence description', function(done) {
+        this.timeout(6000)
         var moveCaret = moveCaretOfOtherUserToLine(testConfig.lineNumber);
         utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
           var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_WITH_SEQ_DESCRIPTION_2);
           expect(distance.left).to.be(0);
           expect(distance.top).to.be(0);
           done();
-        }, 1900);
+        }, 4000);
       });
     }
 
@@ -166,10 +169,11 @@ describe('ep_cursortrace - integration with ep_script_toggle_view', function () 
     }
 
     before(function(done) {
+      this.timeout(4000);
       utils.openPadForMultipleUsers(this, createScript, function() {
         utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
           // open SM for the other user, so all lines of the SM are visible
-          utils.executeAndWaitForCaretIndicatorToMove(openSM, done);
+          utils.executeAndWaitForCaretIndicatorToMove(openSM, done, 2000);
         });
       });
     });
@@ -196,6 +200,7 @@ describe('ep_cursortrace - integration with ep_script_toggle_view', function () 
       ].forEach(function(testConfig) {
           context('and line is ' + testConfig.description, function() {
             before(function(done) {
+              this.timeout(6000);
               forceCaretIndicatorToMove(done);
             });
 
