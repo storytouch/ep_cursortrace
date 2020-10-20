@@ -6,9 +6,15 @@
 
 var authorManager = require("ep_etherpad-lite/node/db/AuthorManager"),
 padMessageHandler = require("ep_etherpad-lite/node/handler/PadMessageHandler"),
-            async = require('ep_etherpad-lite/node_modules/async');
+            async = require('ep_etherpad-lite/node_modules/async'),
+messageDispatcher = require('./messageDispatcher');
 
-var buffer = {};
+var MESSAGE_DISPATCHER_INTERVAL = 1000; // 1 second
+var buffer = messageDispatcher.init(function(msg) {
+  padMessageHandler.handleCustomObjectMessage(msg, false, function(){
+    // TODO: Error handling.
+  })
+}, MESSAGE_DISPATCHER_INTERVAL)
 
 /*
 * Handle incoming messages from clients
@@ -68,13 +74,9 @@ exports.handleMessage = async function(hook_name, context, callback){
 
 
 function sendToRoom(message, msg){
-  var bufferAllows = true; // Todo write some buffer handling for protection and to stop DDoS -- myAuthorId exists in message.
-  if(bufferAllows){
-    setTimeout(function(){ // This is bad..  We have to do it because ACE hasn't redrawn by the time the cursor has arrived
-      padMessageHandler.handleCustomObjectMessage(msg, false, function(){
-        // TODO: Error handling.
-      })
-    }
-      , 500);
-  }
+  // using a buffer handling for protection and to stop DDoS,
+  // using padId+myAuthorId as key to send only the most recent
+  // message in the buffer for each user per pad
+  var key = message.padId + "|" + message.myAuthorId;
+  buffer.dispatch(key, msg);
 }

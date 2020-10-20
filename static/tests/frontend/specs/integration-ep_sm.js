@@ -47,12 +47,13 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
     }
 
     it('shows caret indicator on beginning of line with heading', function(done) {
+      this.timeout(4000);
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndBeginningOfLine(LINE_WITH_HEADING);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      });
+      }, 2000);
     });
   });
 
@@ -62,12 +63,13 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
     }
 
     it('updates the caret indicator for this user', function(done) {
+      this.timeout(4000);
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_AFTER_SM);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      });
+      }, 2000);
     });
 
     context('and this user opens the SM', function() {
@@ -109,12 +111,13 @@ describe('ep_cursortrace - integration with ep_script_scene_marks', function () 
     }
 
     it('updates the caret indicator for this user', function(done) {
+      this.timeout(4000);
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         helper.waitFor(function() {
           var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(LINE_BEFORE_SM);
           return distance.left === 0 && distance.top === 0;
         }).done(done);
-      });
+      }, 2000);
     });
 
     context('and this user opens the SM', function() {

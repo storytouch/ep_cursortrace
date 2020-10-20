@@ -27,11 +27,13 @@ describe('ep_cursortrace - api - inbound messages', function() {
 
   describe('GO_TO_CARET_OF_USER', function() {
     before(function(done) {
+      this.timeout(4000);
+
       // move caret of other user to the end of pad, so it is out of viewport
       var moveCaretOutOfViewport = function(done) {
         utils.placeCaretOfOtherUserAtEndOfLine(MULTIPLE_LINES - 1, done);
       }
-      utils.executeAndWaitForCaretIndicatorToMove(moveCaretOutOfViewport, done);
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretOutOfViewport, done, 2000);
     });
 
     context('when user requires to go to caret of other user', function() {

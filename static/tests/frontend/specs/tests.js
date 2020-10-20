@@ -36,13 +36,14 @@ describe('ep_cursortrace - Basic Tests', function () {
     });
 
     it('updates the caret indicator for this user', function(done) {
+      this.timeout(4000);
       utils.executeAndWaitForCaretIndicatorToMove(moveCaret, function() {
         // caret is at the end of the line; caret indicator should be there too
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      });
+      }, 2000);
     });
   });
 
@@ -54,20 +55,20 @@ describe('ep_cursortrace - Basic Tests', function () {
     }
 
     before(function(done) {
-      this.timeout(5000);
+      this.timeout(8000);
       utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
         makeSureCaretOfOtherUserIsAtEndOfLine(TARGET_LINE, done);
       });
     });
 
     it('updates the caret indicator of the other user', function(done) {
-      this.timeout(3000);
+      this.timeout(6000);
       utils.executeAndWaitForCaretIndicatorToMove(editLine, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      }, 2900);
+      }, 4000);
     });
   });
 
@@ -75,7 +76,7 @@ describe('ep_cursortrace - Basic Tests', function () {
     var originalPosition;
 
     before(function(done) {
-      this.timeout(4000);
+      this.timeout(6000);
       utils.waitForCaretIndicatorToBeVisibleForBothUsers(function() {
         originalPosition = utils.getCaretIndicatorPosition();
 
@@ -91,17 +92,18 @@ describe('ep_cursortrace - Basic Tests', function () {
 
           // [user 2] go back to the end of line
           utils.placeCaretOfOtherUserAtEndOfLine(TARGET_LINE, done);
-        });
+        }, 4000);
       });
     });
 
     it('does not affect caret indicator for this user', function(done) {
+      this.timeout(4000);
       utils.waitForCaretIndicatorToMove(originalPosition, function() {
         var distance = utils.getDistanceBetweenCaretIndicatorAndEndOfLine(TARGET_LINE);
         expect(distance.left).to.be(0);
         expect(distance.top).to.be(0);
         done();
-      });
+      }, 2000);
     });
   });
 
@@ -146,7 +148,7 @@ describe('ep_cursortrace - Basic Tests', function () {
           var distance = utils.getDistanceBetweenCaretIndicatorAndTarget($emptyLine);
           return distance.left === 0 && distance.top === 0;
         }).done(done);
-      });
+      }, 2000);
     });
   });
 
@@ -192,7 +194,7 @@ describe('ep_cursortrace - Basic Tests', function () {
     // move caret to middle of line, so we're able to detect when it is moved to the end
     // and caret indicator was updated
     utils.executeAndWaitForCaretIndicatorToMove(moveCaretToMiddleOfLine, function() {
-      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEndOfLine, done, 2000);
-    }, 2000);
+      utils.executeAndWaitForCaretIndicatorToMove(moveCaretToEndOfLine, done, 4000);
+    }, 4000);
   }
 });
