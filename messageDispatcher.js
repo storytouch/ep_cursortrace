@@ -19,7 +19,7 @@ messageDispatcher.prototype._registerMessage = function(key, message) {
     // creates a new register
     this.indexedBuffer[key] = {
       message: message,
-      timeoutId: null,
+      timeoutRef: null,
       postponementsCounter: 0,
     };
   }
@@ -54,7 +54,7 @@ messageDispatcher.prototype._scheduleDispatch = function(key) {
   var self = this;
 
   var bufferEntry = self.indexedBuffer[key];
-  var previousScheduler = bufferEntry.timeoutId;
+  var previousScheduler = bufferEntry.timeoutRef;
   if (previousScheduler) {
     var postponementsCounter = bufferEntry.postponementsCounter;
     var shouldDispatchNow = postponementsCounter >= MAXIMUM_POSTPONEMENTS;
@@ -72,12 +72,12 @@ messageDispatcher.prototype._scheduleDispatch = function(key) {
   }
 
   // creates a new scheduler for this key [1]
-  var timeoutId = setTimeout(function() {
+  var timeoutRef = setTimeout(function() {
     var message = self._consumeMessage(key);
     self.dispatchFunction(message);
   }, self.dispatchInterval);
 
-  bufferEntry.timeoutId = timeoutId;
+  bufferEntry.timeoutRef = timeoutRef;
 };
 
 messageDispatcher.prototype.dispatch = function(key, message) {
