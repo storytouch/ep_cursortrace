@@ -92,7 +92,7 @@ var splitNodeOnCaretPosition = function(cloneTextNode, counter, caretColumn) {
   // sometimes when there are other users editing the same pad, the split is
   // called too early and the text is not sincronized with the caret yet, 
   // so we don't need to split anything
-  if (cloneTextNode.length <= caretColumn) return cloneTextNode;
+  if (cloneTextNode.length < caretColumn) return cloneTextNode;
 
   // cloneTextNode is an empty line (the <br> inside the <div>), so we don't need to split anything
   if (cloneTextNode.nodeType !== Node.TEXT_NODE) return cloneTextNode;
